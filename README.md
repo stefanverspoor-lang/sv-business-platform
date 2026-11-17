@@ -50,7 +50,7 @@ Toegang per klant loopt via `access_grants` (in de bedrijfsdatabase).
 ├── public_html/            website (niet in deze repository)
 │   └── crm -> ../crm-app/public   (symbolische link)
 ├── crm-app/                deze repository + .env
-└── crm-backups/            back-ups
+    └── storage/app/backups/   back-ups (laatste 30 per database)
 ```
 
 ## Tests

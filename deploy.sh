@@ -10,9 +10,8 @@ echo "==> Onderhoudsmodus aan"
 php artisan down --retry=15 || true
 
 echo "==> Back-up van de drie databases"
-mkdir -p ../crm-backups
 STAMP=$(date +%Y%m%d-%H%M%S)
-php artisan crm:backup --path="../crm-backups" --stamp="$STAMP" || echo "Let op: back-up mislukt, controleer dit voor je verdergaat."
+php artisan crm:backup --stamp="$STAMP" || echo "Let op: back-up mislukt, controleer dit voor je verdergaat."
 
 echo "==> Nieuwste versie ophalen"
 git pull --ff-only
