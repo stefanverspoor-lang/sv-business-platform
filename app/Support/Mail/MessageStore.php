@@ -48,6 +48,10 @@ class MessageStore
         try {
             $date = Carbon::instance($message->getDate()->toDate())->utc();
         } catch (Throwable) {
+            $date = null;
+        }
+        // Geen of onzinnige datum in de mail (komt voor): dan het moment van ophalen.
+        if (! $date || $date->year < 2000 || $date->isAfter(now()->addDay())) {
             $date = now();
         }
 

@@ -22,6 +22,9 @@ class MailboxSync
 {
     public const PER_RUN = 25;
 
+    /** @var array<int, string> berichten die niet konden worden opgeslagen */
+    protected array $skipped = [];
+
     public function __construct(
         protected MailboxConnector $connector,
         protected MessageStore $store,
@@ -31,6 +34,7 @@ class MailboxSync
     public function sync(Mailbox $mailbox): int
     {
         $count = 0;
+        $this->skipped = [];
 
         try {
             $client = $this->connector->connect($mailbox);
@@ -45,7 +49,10 @@ class MailboxSync
                 $count += $this->syncFolder($client, $mailbox, $path, $direction);
             }
 
-            $mailbox->forceFill(['last_synced_at' => now(), 'last_error' => null])->save();
+            $mailbox->forceFill([
+                'last_synced_at' => now(),
+                'last_error' => $this->skipped ? mb_substr(__('Overgeslagen berichten: :list', ['list' => implode('; ', $this->skipped)]), 0, 1000) : null,
+            ])->save();
             $client->disconnect();
         } catch (Throwable $e) {
             report($e);
@@ -79,9 +86,15 @@ class MailboxSync
         $new = 0;
 
         foreach ($uids->take(self::PER_RUN) as $uid) {
-            $message = $folder->query()->getMessageByUid($uid);
-            if ($message instanceof Message && $this->store->storeImapMessage($mailbox, $path, $direction, $uid, $message)) {
-                $new++;
+            try {
+                $message = $folder->query()->getMessageByUid($uid);
+                if ($message instanceof Message && $this->store->storeImapMessage($mailbox, $path, $direction, $uid, $message)) {
+                    $new++;
+                }
+            } catch (Throwable $e) {
+                // Eén onleesbaar bericht mag de rest van de mailbox niet blokkeren.
+                report($e);
+                $this->skipped[] = "{$path} #{$uid}: ".mb_substr($e->getMessage(), 0, 200);
             }
             Arr::set($state, $path.'.last_uid', $uid);
             $mailbox->forceFill(['sync_state' => $state])->save();
