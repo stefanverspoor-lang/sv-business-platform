@@ -38,7 +38,7 @@ Toegang per klant loopt via `access_grants` (in de bedrijfsdatabase).
 | Commando | Wat het doet |
 | --- | --- |
 | `php artisan crm:install --force` | Migraties (centraal + bedrijven), bedrijven, rollen en rechten. Veilig herhaalbaar |
-| `php artisan crm:create-superadmin` | Superadmin-account aanmaken |
+| `php artisan crm:create-superadmin e-mail Voornaam Achternaam` | Superadmin aanmaken met een tijdelijk wachtwoord |
 | `php artisan crm:migrate-companies` | Alleen de bedrijfsdatabases bijwerken |
 | `php artisan crm:backup` | Back-up van alle drie de databases (ook dagelijks gepland) |
 | `bash deploy.sh` | Nieuwe versie op de server zetten |

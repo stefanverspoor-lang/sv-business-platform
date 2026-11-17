@@ -49,7 +49,7 @@ class InstallCrm extends Command
         }
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $this->components->info('Klaar. Maak zo nodig de superadmin aan met: php artisan crm:create-superadmin');
+        $this->components->info('Klaar. Maak zo nodig de superadmin aan met: php artisan crm:create-superadmin e-mail Voornaam Achternaam');
 
         return self::SUCCESS;
     }
