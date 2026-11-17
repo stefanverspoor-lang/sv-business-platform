@@ -17,18 +17,19 @@ echo "==> Nieuwste versie ophalen"
 git pull --ff-only
 
 echo "==> Afhankelijkheden installeren"
+# --no-scripts: Hostinger staat proc_open niet toe; package:discover doen we zelf.
 if [ -f composer.lock ]; then
-  composer install --no-dev --optimize-autoloader --no-interaction
+  composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 else
-  composer update --no-dev --optimize-autoloader --no-interaction
+  composer update --no-dev --optimize-autoloader --no-interaction --no-scripts
 fi
+php artisan package:discover
 
 echo "==> Databases bijwerken, rollen en rechten"
 php artisan crm:install --force
 
 echo "==> Bestanden van het beheerscherm"
 php artisan filament:assets
-php artisan storage:link || true
 
 echo "==> Caches opbouwen"
 php artisan optimize:clear

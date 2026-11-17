@@ -1,17 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schedule;
-
 /*
-| Geplande taken. Op Hostinger draait elke minuut een cron-taak:
-|   php /home/u683887547/domains/svbusinesssupport.com/crm-app/artisan schedule:run
+| Geplande taken lopen via php artisan crm:tick (zie App\Console\Commands\Tick).
+| Op Hostinger draait daarvoor elke minuut een cron-taak:
+|   /opt/alt/php83/usr/bin/php /home/u683887547/domains/svbusinesssupport.com/crm-app/artisan crm:tick
+| De standaard Laravel-planner (schedule:run) werkt daar niet, omdat Hostinger
+| het starten van andere programma's vanuit PHP niet toestaat.
 */
-
-// Dagelijkse back-up van de drie databases (tijden in UTC).
-Schedule::command('crm:backup')->dailyAt('18:00')->withoutOverlapping();
-
-// Wachtrij verwerken zonder continu draaiend proces (gedeelde hosting).
-Schedule::command('queue:work --stop-when-empty --max-time=50')->everyMinute()->withoutOverlapping();
-
-// Oude sessies en verlopen wachtwoord-links opruimen.
-Schedule::command('auth:clear-resets')->daily();
