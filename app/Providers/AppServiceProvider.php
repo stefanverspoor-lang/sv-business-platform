@@ -48,6 +48,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\EmailMessage::class, \App\Policies\EmailMessagePolicy::class);
         Gate::policy(\App\Models\Mailbox::class, \App\Policies\MailboxPolicy::class);
         Gate::policy(\App\Models\EmailTemplate::class, \App\Policies\EmailTemplatePolicy::class);
+        Gate::policy(\App\Models\Campaign::class, \App\Policies\CampaignPolicy::class);
+        Gate::policy(\App\Models\Lead::class, \App\Policies\LeadPolicy::class);
+        Gate::policy(\App\Models\CollectionFile::class, \App\Policies\CollectionFilePolicy::class);
+        Gate::policy(\App\Models\CommissionModel::class, \App\Policies\CommissionModelPolicy::class);
+        Gate::policy(\App\Models\CallOutcome::class, \App\Policies\CallOutcomePolicy::class);
+        Gate::policy(\App\Models\DataImport::class, \App\Policies\DataImportPolicy::class);
 
         // Vaste korte namen in de database voor gekoppelde onderdelen,
         // zodat ze niet afhangen van klassenamen in de code.
@@ -60,6 +66,12 @@ class AppServiceProvider extends ServiceProvider
             'document' => \App\Models\Document::class,
             'email_message' => \App\Models\EmailMessage::class,
             'access_grant' => \App\Models\AccessGrant::class,
+            'campaign' => \App\Models\Campaign::class,
+            'lead' => \App\Models\Lead::class,
+            'collection_file' => \App\Models\CollectionFile::class,
+            'payment_agreement' => \App\Models\PaymentAgreement::class,
+            'commission_model' => \App\Models\CommissionModel::class,
+            'call_outcome' => \App\Models\CallOutcome::class,
         ]);
 
         Event::listen(Login::class, function (Login $event) {

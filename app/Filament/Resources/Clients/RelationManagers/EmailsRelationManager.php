@@ -33,7 +33,7 @@ class EmailsRelationManager extends RelationManager
             ->columns(EmailResource::emailColumns())
             ->recordUrl(fn (EmailMessage $r) => EmailResource::getUrl('view', ['record' => $r]))
             ->headerActions([
-                ComposeEmailAction::make(client: fn () => $this->getOwnerRecord()),
+                ComposeEmailAction::make(client: fn () => $this->getOwnerRecord() instanceof \App\Models\Client ? $this->getOwnerRecord() : null),
             ]);
     }
 }

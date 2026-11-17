@@ -80,8 +80,31 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Herinneringen verschijnen als melding (belletje rechtsboven), verstuurd door `crm:tick`.
 - Herhalende taken: na afronden wordt de volgende automatisch aangemaakt.
 
+## Telemarketing en pre-incasso
+
+- Opdrachtgevers zijn gewone klanten. Campagnes (telemarketing) en dossiers (pre-incasso)
+  horen altijd bij één opdrachtgever.
+- Import via Excel (.xlsx) of CSV, met voorbeeldbestanden. Kolommen worden op naam herkend
+  (NL en EN); onbekende kolommen worden als extra informatie bewaard. Dubbele leads (zelfde
+  nummer in de campagne) en dossiers (zelfde dossiernummer bij de opdrachtgever) worden
+  overgeslagen. Elk importbestand staat in het importlogboek.
+- Telefoonnummers worden omgezet naar internationaal formaat (`App\Support\Calling\PhoneNumber`).
+- **Belscherm**: wachtrij per medewerker (terugbelafspraken eerst, dan nooit gebeld, dan het
+  langst geleden). Het gekozen record wordt 15 minuten vergrendeld. BEL NU is een `tel:`-link
+  (opent het standaard belprogramma, CloudTalk Desktop); "Via CloudTalk" gebruikt `ct+tel:`.
+- Gespreksresultaten zijn per bedrijf aan te passen (Beheer). Standaardresultaten kun je
+  uitzetten, niet verwijderen.
+- Betalingsafspraken worden alleen vastgelegd; het CRM markeert nooit zelf iets als betaald.
+  Pas de betaalimport van de opdrachtgever bepaalt of een dossier volledig betaald is
+  (afgesproken bedrag, of het openstaande bedrag zonder afspraak). Deelbetalingen tellen niet
+  als geslaagd. Dan pas wordt de commissie berekend volgens het commissiemodel van de
+  opdrachtgever dat gold op de betaaldatum.
+- Rapportages per opdrachtgever, campagne, medewerker en periode; export naar Excel en mailen
+  vanuit het CRM.
+
 ## Status
 
 - Fase 0 (inrichting Hostinger): afgerond
 - Fase 1 (fundament): afgerond
-- Fase 2 (klantprofiel, documenten, taken, e-mail): in deze versie
+- Fase 2 (klantprofiel, documenten, taken, e-mail): afgerond
+- Fase 3 (telemarketing en pre-incasso): in deze versie

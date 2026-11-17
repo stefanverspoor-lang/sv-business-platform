@@ -100,7 +100,15 @@ class DocumentsRelationManager extends RelationManager
                     })
                     ->after(function (Document $record) {
                         $owner = $this->getOwnerRecord();
-                        $client = $owner instanceof Client ? $owner : ($owner->client ?? null);
+                        // Alleen bij klantgegevens in de tijdlijn; documenten van debiteuren horen niet bij de opdrachtgever.
+                        $client = match (true) {
+                            $owner instanceof Client => $owner,
+                            $owner instanceof \App\Models\Contact, $owner instanceof \App\Models\Contract => $owner->client,
+                            default => null,
+                        };
+                        if (! $client) {
+                            return;
+                        }
                         Activity::record($client, ActivityType::Document, __('Document toegevoegd: :title', ['title' => $record->title]), subject: $record);
                     }),
             ])

@@ -14,6 +14,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -58,6 +59,12 @@ class AppPanelProvider extends PanelProvider
             ])
             ->defaultAvatarProvider(SvAvatarProvider::class)
             ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                NavigationGroup::make(fn () => __('CRM')),
+                NavigationGroup::make(fn () => __('Telemarketing')),
+                NavigationGroup::make(fn () => __('Pre-incasso')),
+                NavigationGroup::make(fn () => __('Beheer'))->collapsed(),
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('60s')
             // Bedrijven: SV Business Support en YES Marketing Solutions

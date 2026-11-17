@@ -35,6 +35,14 @@ final class Roles
         'emails.send',
         'mailboxes.manage',
         'templates.manage',
+        'calls.make',         // belscherm gebruiken (eigen toegewezen leads en dossiers)
+        'campaigns.manage',   // campagnes aanmaken, leads importeren en toewijzen
+        'leads.view_all',     // alle leads zien (anders alleen toegewezen)
+        'collection.manage',  // dossiers en betaalimport importeren, toewijzen, exporteren
+        'collection.view_all',// alle dossiers zien (anders alleen toegewezen)
+        'commission.manage',  // commissiemodellen per opdrachtgever
+        'outcomes.manage',    // gespreksresultaten beheren
+        'reports.view',       // rapportages telemarketing en pre-incasso
         'users.manage',       // gebruikers van het eigen bedrijf beheren
         'audit.view',
     ];
@@ -45,12 +53,14 @@ final class Roles
         return [
             self::COMPANY_MANAGER => self::PERMISSIONS,
             self::SUPERVISOR => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
-                'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'templates.manage'],
-            self::CALLCENTER => ['clients.view', 'emails.send'],
+                'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'templates.manage',
+                'calls.make', 'campaigns.manage', 'leads.view_all', 'collection.manage', 'collection.view_all', 'reports.view'],
+            self::CALLCENTER => ['clients.view', 'emails.send', 'calls.make'],
             self::DATA_ENTRY => ['clients.view'],
             self::PROJECT => ['clients.view', 'documents.upload', 'emails.send'],
             self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
-                'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage'],
+                'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage',
+                'collection.view_all', 'reports.view'],
         ];
     }
 

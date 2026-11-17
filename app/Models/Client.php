@@ -59,6 +59,23 @@ class Client extends Model
         return $this->morphMany(Document::class, 'documentable');
     }
 
+    /** Telemarketingcampagnes waarvoor deze klant opdrachtgever is. */
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
+    /** Pre-incassodossiers van deze opdrachtgever. */
+    public function collectionFiles(): HasMany
+    {
+        return $this->hasMany(CollectionFile::class);
+    }
+
+    public function commissionModels(): HasMany
+    {
+        return $this->hasMany(CommissionModel::class);
+    }
+
     public function tasks(): MorphMany
     {
         return $this->morphMany(Task::class, 'taskable');

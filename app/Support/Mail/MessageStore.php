@@ -5,11 +5,14 @@ namespace App\Support\Mail;
 use App\Enums\ActivityType;
 use App\Models\Activity;
 use App\Models\Client;
+use App\Models\CollectionFile;
+use App\Models\Lead;
 use App\Models\Contact;
 use App\Models\EmailLink;
 use App\Models\EmailMessage;
 use App\Models\Mailbox;
 use App\Support\Tenancy\TenantManager;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -103,7 +106,7 @@ class MessageStore
         return $email;
     }
 
-    public function link(EmailMessage $email, Client|Contact $target, bool $automatic = false): void
+    public function link(EmailMessage $email, Model $target, bool $automatic = false): void
     {
         $link = EmailLink::firstOrCreate([
             'email_message_id' => $email->id,
@@ -111,8 +114,8 @@ class MessageStore
             'linkable_id' => $target->getKey(),
         ], ['is_automatic' => $automatic, 'linked_by' => $automatic ? null : auth()->id()]);
 
-        $client = $target instanceof Client ? $target : $target->client;
-        if ($link->wasRecentlyCreated && $client && $target instanceof Client) {
+        if ($link->wasRecentlyCreated && $target instanceof Client) {
+            $client = $target;
             Activity::record(
                 $client,
                 $email->direction === 'in' ? ActivityType::EmailIn : ActivityType::EmailOut,
@@ -146,6 +149,12 @@ class MessageStore
         }
         foreach ($clients as $client) {
             $this->link($email, $client, true);
+        }
+        // Debiteuren en leads met dit e-mailadres (pre-incasso en telemarketing)
+        foreach ([CollectionFile::class, Lead::class] as $model) {
+            foreach ($model::query()->whereIn('email', $addresses)->limit(20)->get() as $record) {
+                $this->link($email, $record, true);
+            }
         }
 
         $this->assignDefault($email, $mailbox, $clients->first());
