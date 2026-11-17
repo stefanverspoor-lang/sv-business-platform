@@ -12,6 +12,7 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
@@ -41,6 +42,25 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Client::class, ClientPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(\App\Models\Task::class, \App\Policies\TaskPolicy::class);
+        Gate::policy(\App\Models\Document::class, \App\Policies\DocumentPolicy::class);
+        Gate::policy(\App\Models\Contract::class, \App\Policies\ContractPolicy::class);
+        Gate::policy(\App\Models\EmailMessage::class, \App\Policies\EmailMessagePolicy::class);
+        Gate::policy(\App\Models\Mailbox::class, \App\Policies\MailboxPolicy::class);
+        Gate::policy(\App\Models\EmailTemplate::class, \App\Policies\EmailTemplatePolicy::class);
+
+        // Vaste korte namen in de database voor gekoppelde onderdelen,
+        // zodat ze niet afhangen van klassenamen in de code.
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'client' => Client::class,
+            'contact' => \App\Models\Contact::class,
+            'contract' => \App\Models\Contract::class,
+            'task' => \App\Models\Task::class,
+            'document' => \App\Models\Document::class,
+            'email_message' => \App\Models\EmailMessage::class,
+            'access_grant' => \App\Models\AccessGrant::class,
+        ]);
 
         Event::listen(Login::class, function (Login $event) {
             if ($event->user instanceof User) {

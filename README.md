@@ -62,7 +62,26 @@ vendor/bin/phpunit
 De tests gebruiken drie SQLite-bestanden in `database/testing/` en controleren onder meer
 dat gegevens van SV en YES nooit door elkaar lopen.
 
+## E-mail
+
+- Mailboxen voeg je toe onder **Beheer > Mailboxen** (per bedrijf). Standaard ingesteld op
+  Hostinger: IMAP `imap.hostinger.com:993` (SSL) en SMTP `smtp.hostinger.com:465` (SSL).
+- Het wachtwoord van de mailbox wordt versleuteld opgeslagen met de `APP_KEY`.
+- `crm:tick` haalt elke 5 minuten nieuwe mail op (Postvak IN en Verzonden), maximaal 25
+  berichten per map per keer. Berichten worden in de mailbox zelf niet als gelezen gemarkeerd.
+- Mail van een bekend e-mailadres (klant of contactpersoon) wordt automatisch gekoppeld en
+  toegewezen aan de accountmanager; anders aan de standaardpersoon van de mailbox.
+- Vanuit het CRM verstuurde mail gaat via SMTP en komt ook in de map Verzonden te staan.
+- HTML-mail wordt opgeschoond (geen scripts, formulieren of externe afbeeldingen) en in een
+  afgeschermd kader getoond.
+
+## Taken
+
+- Herinneringen verschijnen als melding (belletje rechtsboven), verstuurd door `crm:tick`.
+- Herhalende taken: na afronden wordt de volgende automatisch aangemaakt.
+
 ## Status
 
 - Fase 0 (inrichting Hostinger): afgerond
-- Fase 1 (fundament): in deze versie
+- Fase 1 (fundament): afgerond
+- Fase 2 (klantprofiel, documenten, taken, e-mail): in deze versie

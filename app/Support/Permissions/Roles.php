@@ -26,6 +26,15 @@ final class Roles
         'clients.create',
         'clients.update',
         'clients.delete',
+        'contracts.manage',   // contracten en prijsafspraken beheren
+        'documents.upload',
+        'documents.delete',
+        'tasks.view_all',     // alle taken zien (anders alleen eigen taken)
+        'tasks.manage',       // taken aan anderen toewijzen en alle taken wijzigen
+        'emails.view_all',    // alle e-mail van het bedrijf zien (anders alleen toegewezen)
+        'emails.send',
+        'mailboxes.manage',
+        'templates.manage',
         'users.manage',       // gebruikers van het eigen bedrijf beheren
         'audit.view',
     ];
@@ -35,11 +44,13 @@ final class Roles
     {
         return [
             self::COMPANY_MANAGER => self::PERMISSIONS,
-            self::SUPERVISOR => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update'],
-            self::CALLCENTER => ['clients.view'],
+            self::SUPERVISOR => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
+                'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'templates.manage'],
+            self::CALLCENTER => ['clients.view', 'emails.send'],
             self::DATA_ENTRY => ['clients.view'],
-            self::PROJECT => ['clients.view'],
-            self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update'],
+            self::PROJECT => ['clients.view', 'documents.upload', 'emails.send'],
+            self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
+                'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage'],
         ];
     }
 

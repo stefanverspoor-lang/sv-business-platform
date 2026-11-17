@@ -106,7 +106,7 @@ class UserResource extends Resource
         $company = Filament::getTenant();
 
         return parent::getEloquentQuery()
-            ->whereHas('companies', fn (Builder $q) => $q->whereKey($company?->getKey()))
+            ->whereHas('companies', fn (Builder $query) => $query->whereKey($company?->getKey()))
             ->with('roles');
     }
 

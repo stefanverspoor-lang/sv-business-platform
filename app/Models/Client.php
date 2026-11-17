@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
@@ -36,6 +37,43 @@ class Client extends Model
     public function primaryContact(): HasOne
     {
         return $this->hasOne(Contact::class)->where('is_primary', true);
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(Activity::class)->latest('occurred_at');
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(ClientService::class);
+    }
+
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class, 'documentable');
+    }
+
+    public function tasks(): MorphMany
+    {
+        return $this->morphMany(Task::class, 'taskable');
+    }
+
+    public function emails(): MorphToMany
+    {
+        return $this->morphToMany(EmailMessage::class, 'linkable', 'email_links')->withPivot('is_automatic');
+    }
+
+    /** Alle e-mailadressen van de klant en zijn contactpersonen (voor automatisch koppelen). */
+    public function emailAddresses(): array
+    {
+        return collect([$this->email])->merge($this->contacts()->pluck('email'))
+            ->filter()->map(fn ($e) => strtolower(trim($e)))->unique()->values()->all();
     }
 
     public function accessGrants(): MorphMany

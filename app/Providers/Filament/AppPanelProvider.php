@@ -58,7 +58,8 @@ class AppPanelProvider extends PanelProvider
             ])
             ->defaultAvatarProvider(SvAvatarProvider::class)
             ->sidebarCollapsibleOnDesktop()
-            ->databaseNotifications(false)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('60s')
             // Bedrijven: SV Business Support en YES Marketing Solutions
             ->tenant(Company::class, slugAttribute: 'slug')
             ->tenantProfile(EditCompanyProfile::class)

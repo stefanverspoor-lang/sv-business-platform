@@ -6,7 +6,14 @@ use App\Enums\ClientStatus;
 use App\Filament\Resources\Clients\Pages\CreateClient;
 use App\Filament\Resources\Clients\Pages\EditClient;
 use App\Filament\Resources\Clients\Pages\ListClients;
+use App\Filament\Resources\Clients\Pages\ViewClient;
+use App\Filament\Resources\Clients\RelationManagers\ActivitiesRelationManager;
 use App\Filament\Resources\Clients\RelationManagers\ContactsRelationManager;
+use App\Filament\Resources\Clients\RelationManagers\ContractsRelationManager;
+use App\Filament\Resources\Clients\RelationManagers\EmailsRelationManager;
+use App\Filament\Resources\Clients\RelationManagers\ServicesRelationManager;
+use App\Filament\Resources\Clients\RelationManagers\TasksRelationManager;
+use App\Filament\Shared\DocumentsRelationManager;
 use App\Models\Client;
 use App\Models\User;
 use BackedEnum;
@@ -18,6 +25,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -110,6 +118,38 @@ class ClientResource extends Resource
         ]);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make()
+                ->columns(3)
+                ->columnSpanFull()
+                ->schema([
+                    TextEntry::make('status')->label(__('Status'))->badge(),
+                    TextEntry::make('primaryContact.full_name')->label(__('Contactpersoon'))->placeholder('-'),
+                    TextEntry::make('account_manager_id')->label(__('Accountmanager'))
+                        ->state(fn (Client $r) => $r->account_manager_id ? User::find($r->account_manager_id)?->name : null)
+                        ->placeholder('-'),
+                    TextEntry::make('phone')->label(__('Telefoon'))->placeholder('-')
+                        ->url(fn (Client $r) => $r->phone ? 'tel:'.preg_replace('/[^0-9+]/', '', $r->phone) : null)
+                        ->icon(Heroicon::OutlinedPhone)->color('primary'),
+                    TextEntry::make('email')->label(__('E-mail'))->placeholder('-')
+                        ->url(fn (Client $r) => $r->email ? 'mailto:'.$r->email : null)->icon(Heroicon::OutlinedEnvelope),
+                    TextEntry::make('website')->label(__('Website'))->placeholder('-')
+                        ->url(fn (Client $r) => $r->website, shouldOpenInNewTab: true),
+                    TextEntry::make('address')->label(__('Adres'))
+                        ->state(fn (Client $r) => collect([$r->address_line, trim($r->postal_code.' '.$r->city), $r->country])->filter()->implode(', ') ?: null)
+                        ->placeholder('-'),
+                    TextEntry::make('registration_number')->label(__('Inschrijfnummer'))->placeholder('-'),
+                    TextEntry::make('vat_number')->label(__('Btw-nummer'))->placeholder('-'),
+                    TextEntry::make('localtime')->label(__('Lokale tijd klant'))
+                        ->state(fn (Client $r) => $r->timezone ? now($r->timezone)->format('H:i').' ('.$r->timezone.')' : null)
+                        ->placeholder('-'),
+                    TextEntry::make('notes')->label(__('Notities'))->placeholder('-')->columnSpanFull(),
+                ]),
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -129,6 +169,7 @@ class ClientResource extends Resource
                 SelectFilter::make('status')->label(__('Status'))->options(ClientStatus::class),
                 TrashedFilter::make(),
             ])
+            ->recordUrl(fn (Client $record) => static::getUrl('view', ['record' => $record]))
             ->recordActions([
                 EditAction::make(),
             ])
@@ -143,7 +184,13 @@ class ClientResource extends Resource
     public static function getRelations(): array
     {
         return [
+            ActivitiesRelationManager::class,
             ContactsRelationManager::class,
+            TasksRelationManager::class,
+            EmailsRelationManager::class,
+            ContractsRelationManager::class,
+            ServicesRelationManager::class,
+            DocumentsRelationManager::class,
         ];
     }
 
@@ -152,6 +199,7 @@ class ClientResource extends Resource
         return [
             'index' => ListClients::route('/'),
             'create' => CreateClient::route('/create'),
+            'view' => ViewClient::route('/{record}'),
             'edit' => EditClient::route('/{record}/edit'),
         ];
     }

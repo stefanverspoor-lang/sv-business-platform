@@ -54,7 +54,7 @@ class AccessControlTest extends TestCase
 
         $assigned = Client::create(['name' => 'Toegewezen']);
         Client::create(['name' => 'Niet toegewezen']);
-        AccessGrant::create(['user_id' => $agent->id, 'grantable_type' => Client::class, 'grantable_id' => $assigned->id]);
+        AccessGrant::create(['user_id' => $agent->id, 'grantable_type' => 'client', 'grantable_id' => $assigned->id]);
 
         $this->assertSame(['Toegewezen'], Client::query()->visibleTo($agent)->pluck('name')->all());
         $this->assertTrue($agent->can('view', $assigned));
