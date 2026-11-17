@@ -56,7 +56,7 @@ Toegang per klant loopt via `access_grants` (in de bedrijfsdatabase).
 ## Tests
 
 ```
-php artisan test
+vendor/bin/phpunit
 ```
 
 De tests gebruiken drie SQLite-bestanden in `database/testing/` en controleren onder meer
