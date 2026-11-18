@@ -5,9 +5,14 @@ namespace App\Filament\Pages;
 use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\Mailbox;
-use App\Support\Imports\Spreadsheet;
 use App\Support\Mail\EmailSender;
+use App\Models\Company;
+use App\Support\Reports\BusinessReport;
 use App\Support\Reports\CallingReport;
+use App\Support\Reports\ReportExporter;
+use App\Support\Tenancy\TenantManager;
+use Filament\Actions\ActionGroup;
+use Illuminate\Support\Carbon;
 use App\Support\Reports\WorkReport;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -36,8 +41,9 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * Rapportages telemarketing en pre-incasso, met export naar Excel en
- * handmatig mailen naar de opdrachtgever.
+ * Rapportagecentrum: pre-incasso, telemarketing, data-entry, uren, klanten,
+ * diensten/campagnes, medewerkers en (superadmin) bedrijven. Export naar
+ * Excel, CSV of PDF en handmatig mailen naar de opdrachtgever.
  */
 class CallingReports extends Page
 {
@@ -56,7 +62,7 @@ class CallingReports extends Page
 
     public function getTitle(): string
     {
-        return __('Rapportages');
+        return __('Rapportagecentrum');
     }
 
     public static function canAccess(): bool
@@ -80,14 +86,15 @@ class CallingReports extends Page
     {
         return $schema
             ->statePath('filters')
-            ->columns(['default' => 1, 'md' => 5])
+            ->columns(['default' => 1, 'md' => 6])
             ->components([
-                ToggleButtons::make('module')->label(__('Rapport'))->inline()->live()
-                    ->options(['collection' => __('Pre-incasso'), 'telemarketing' => __('Telemarketing'), 'data_entry' => __('Data-entry'), 'hours' => __('Uren')])
+                Select::make('module')->label(__('Rapport'))->live()->selectablePlaceholder(false)->columnSpan(['md' => 2])
+                    ->options(fn () => static::modules())
                     ->afterStateUpdated(fn ($set) => $set('campaign_id', null)),
                 Select::make('client_id')->label(__('Opdrachtgever'))->placeholder(__('Alle opdrachtgevers'))
                     ->options(fn () => Client::query()->where(fn ($q) => $q->whereHas('collectionFiles')->orWhereHas('campaigns')->orWhereHas('dataJobs')->orWhereHas('projects'))->orderBy('name')->pluck('name', 'id'))
-                    ->searchable()->live()->afterStateUpdated(fn ($set) => $set('campaign_id', null)),
+                    ->searchable()->live()->afterStateUpdated(fn ($set) => $set('campaign_id', null))
+                    ->visible(fn (Get $get) => $get('module') !== 'companies'),
                 Select::make('campaign_id')->label(__('Campagne'))->placeholder(__('Alle campagnes'))
                     ->options(fn (Get $get) => Campaign::query()->when($get('client_id'), fn ($q, $id) => $q->where('client_id', $id))->orderBy('name')->pluck('name', 'id'))
                     ->visible(fn (Get $get) => $get('module') === 'telemarketing')->live(),
@@ -96,10 +103,51 @@ class CallingReports extends Page
             ]);
     }
 
+    /** @return array<string, string> */
+    public static function modules(): array
+    {
+        $user = auth()->user();
+
+        return array_filter([
+            'collection' => __('Pre-incasso'),
+            'telemarketing' => __('Telemarketing'),
+            'data_entry' => __('Data-entry'),
+            'hours' => __('Uren'),
+            'clients' => __('Klanten'),
+            'services' => __('Diensten en campagnes'),
+            'employees' => __('Medewerkers'),
+            'companies' => $user?->isSuperadmin() ? __('Bedrijven (alle)') : null,
+        ]);
+    }
+
+    protected function withMoney(): bool
+    {
+        return auth()->user()->can('invoices.view') || auth()->user()->can('finance.view');
+    }
+
+    protected function business(): BusinessReport
+    {
+        $tz = FilamentTimezone::get();
+        $f = $this->filters;
+
+        return new BusinessReport(
+            Carbon::parse($f['from'] ?? now($tz)->startOfMonth()->toDateString(), $tz)->startOfDay(),
+            Carbon::parse($f['until'] ?? now($tz)->toDateString(), $tz)->endOfDay(),
+        );
+    }
+
     protected function report(): array
+    {
+        return $this->cachedReport ??= $this->buildReport();
+    }
+
+    protected ?array $cachedReport = null;
+
+    protected function buildReport(): array
     {
         $f = $this->filters;
         $period = CallingReport::period($f['from'] ?? null, $f['until'] ?? null, FilamentTimezone::get());
+        $module = array_key_exists($f['module'] ?? '', static::modules()) ? $f['module'] : 'collection';
 
         $client = $f['client_id'] ? (int) $f['client_id'] : null;
         $work = fn () => new WorkReport(
@@ -107,7 +155,11 @@ class CallingReports extends Page
             \Illuminate\Support\Carbon::parse($f['until'] ?? now())->endOfDay(),
         );
 
-        return match ($f['module'] ?? 'collection') {
+        return match ($module) {
+            'clients' => $this->business()->clients($client, $this->withMoney()),
+            'services' => $this->business()->services($client, $this->withMoney()),
+            'employees' => $this->business()->employees($client),
+            'companies' => BusinessReport::companies($this->perCompany()),
             'telemarketing' => $period->telemarketing($client, $f['campaign_id'] ? (int) $f['campaign_id'] : null),
             'data_entry' => $work()->dataEntry($client),
             'hours' => $work()->hoursOverview($client),
@@ -115,16 +167,47 @@ class CallingReports extends Page
         };
     }
 
+    /** Superadmin: per bedrijf de kerncijfers over de periode. */
+    protected function perCompany(): array
+    {
+        if (! auth()->user()->isSuperadmin()) {
+            return [];
+        }
+        $f = $this->filters;
+        $out = [];
+        foreach (Company::query()->where('is_active', true)->orderBy('name')->get() as $company) {
+            try {
+                $out[$company->name] = app(TenantManager::class)->runFor($company, function () use ($company, $f) {
+                    $tz = $company->timezone ?: FilamentTimezone::get();
+
+                    return (new BusinessReport(
+                        Carbon::parse($f['from'] ?? now($tz)->startOfMonth()->toDateString(), $tz)->startOfDay(),
+                        Carbon::parse($f['until'] ?? now($tz)->toDateString(), $tz)->endOfDay(),
+                    ))->companyTotals();
+                });
+            } catch (Throwable $e) {
+                report($e);
+                $out[$company->name] = null;
+            }
+        }
+
+        return $out;
+    }
+
     protected function title(): string
     {
         $f = $this->filters;
         $parts = [match ($f['module'] ?? '') {
+            'clients' => __('Rapportage klanten'),
+            'services' => __('Rapportage diensten en campagnes'),
+            'employees' => __('Rapportage medewerkers'),
+            'companies' => __('Rapportage bedrijven'),
             'telemarketing' => __('Rapportage telemarketing'),
             'data_entry' => __('Rapportage data-entry'),
             'hours' => __('Urenoverzicht'),
             default => __('Rapportage pre-incasso'),
         }];
-        if ($f['client_id'] ?? null) {
+        if (($f['client_id'] ?? null) && ($f['module'] ?? '') !== 'companies') {
             $parts[] = Client::find($f['client_id'])?->name;
         }
         if ($f['campaign_id'] ?? null) {
@@ -149,16 +232,16 @@ class CallingReports extends Page
             $entries[] = TextEntry::make('s_'.Str::slug($label))->label($label)->state((string) $value)->weight('bold')->size('lg');
         }
 
+        $tables = ReportExporter::tables($report);
+        $sections = array_map(fn ($t) => Section::make($t['title'])->schema([Html::make($this->table($t))])
+            ->columnSpan(count($t['headers']) > 4 || count($tables) === 1 ? 'full' : 1), $tables);
+
         return $schema->components([
             Section::make()->schema([EmbeddedSchema::make('filtersForm')]),
             Section::make($this->title())->description($this->periodLabel())
                 ->columns(['default' => 2, 'md' => 4])
                 ->schema($entries),
-            Grid::make(['default' => 1, 'lg' => 2])->schema([
-                Section::make(__('Per medewerker'))->schema([Html::make($this->table($report['perUser']))]),
-                Section::make($report['titles']['perOutcome'] ?? __('Per gespreksresultaat'))->schema([Html::make($this->table($report['perOutcome']))]),
-                Section::make(__('Per maand'))->schema([Html::make($this->table($report['perMonth']))]),
-            ]),
+            Grid::make(['default' => 1, 'lg' => 2])->schema($sections),
         ]);
     }
 
@@ -174,6 +257,7 @@ class CallingReports extends Page
         foreach ($data['headers'] as $h) {
             $html .= "<th {$th}>".e($h).'</th>';
         }
+        $td = 'style="padding:6px 8px;border-bottom:1px solid rgba(127,127,127,.15);white-space:nowrap"';
         $html .= '</tr></thead><tbody>';
         foreach ($data['rows'] as $row) {
             $html .= '<tr>'.collect($row)->map(fn ($v) => "<td {$td}>".e((string) $v).'</td>')->implode('').'</tr>';
@@ -182,14 +266,12 @@ class CallingReports extends Page
         return $html.'</tbody></table></div>';
     }
 
-    protected function writeFile(): array
+    protected function writeFile(string $format = 'xlsx'): array
     {
-        $name = Str::slug($this->title()).'-'.now()->format('Ymd').'.xlsx';
+        $format = array_key_exists($format, ReportExporter::FORMATS) ? $format : 'xlsx';
+        $name = Str::slug($this->title()).'-'.now()->format('Ymd').'.'.$format;
         $relative = 'companies/'.Filament::getTenant()->slug.'/reports/'.now()->format('Y/m').'/'.Str::random(8).'-'.$name;
-        $full = Storage::disk('local')->path($relative);
-        @mkdir(dirname($full), 0775, true);
-        $rows = CallingReport::toRows($this->report(), $this->title(), $this->periodLabel());
-        Spreadsheet::write($full, array_shift($rows), $rows);
+        ReportExporter::write($format, Storage::disk('local')->path($relative), $this->report(), $this->title(), $this->periodLabel());
 
         return [$name, $relative];
     }
@@ -197,15 +279,17 @@ class CallingReports extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('export')
-                ->label(__('Exporteren naar Excel'))
+            ActionGroup::make(array_map(fn ($format, $label) => Action::make('export_'.$format)
+                ->label($label)
+                ->action(function () use ($format) {
+                    [$name, $path] = $this->writeFile($format);
+
+                    return response()->download(Storage::disk('local')->path($path), $name)->deleteFileAfterSend();
+                }), array_keys(ReportExporter::FORMATS), ReportExporter::FORMATS))
+                ->label(__('Exporteren'))
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
-                ->action(function () {
-                    [$name, $path] = $this->writeFile();
-
-                    return Storage::disk('local')->download($path, $name);
-                }),
+                ->button(),
             Action::make('mail')
                 ->label(__('Rapport mailen'))
                 ->icon(Heroicon::OutlinedEnvelope)
@@ -214,6 +298,7 @@ class CallingReports extends Page
                     $client = ($id = $this->filters['client_id'] ?? null) ? Client::with('primaryContact')->find($id) : null;
 
                     return [
+                        'format' => 'pdf',
                         'mailbox_id' => Mailbox::where('is_active', true)->orderBy('id')->value('id'),
                         'to' => array_values(array_filter([$client?->primaryContact?->email ?? $client?->email])),
                         'subject' => $this->title().' – '.$this->periodLabel(),
@@ -223,16 +308,17 @@ class CallingReports extends Page
                     ];
                 })
                 ->schema([
+                    ToggleButtons::make('format')->label(__('Bijlage'))->inline()->options(ReportExporter::FORMATS)->default('pdf')->required(),
                     Select::make('mailbox_id')->label(__('Versturen vanaf'))
                         ->options(fn () => Mailbox::where('is_active', true)->get()->mapWithKeys(fn ($m) => [$m->id => "{$m->name} <{$m->email}>"]))->required(),
                     TagsInput::make('to')->label(__('Aan'))->nestedRecursiveRules(['email'])->required(),
                     TextInput::make('subject')->label(__('Onderwerp'))->required(),
                     Textarea::make('body')->label(__('Bericht'))->rows(8)->required(),
                 ])
-                ->modalDescription(__('Het rapport gaat als Excel-bijlage mee.'))
+                ->modalDescription(__('Het rapport gaat als bijlage mee.'))
                 ->modalSubmitActionLabel(__('Versturen'))
                 ->action(function (array $data) {
-                    [$name, $path] = $this->writeFile();
+                    [$name, $path] = $this->writeFile($data['format'] ?? 'pdf');
                     $client = ($id = $this->filters['client_id'] ?? null) ? Client::find($id) : null;
                     try {
                         app(EmailSender::class)->send(Mailbox::findOrFail($data['mailbox_id']), $data['to'], $data['subject'], $data['body'],

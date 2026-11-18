@@ -23,6 +23,7 @@ class Lead extends Model
         return [
             'status' => LeadStatus::class, 'extra' => 'array', 'last_called_at' => 'datetime',
             'next_call_at' => 'datetime', 'converted_at' => 'datetime', 'locked_until' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 

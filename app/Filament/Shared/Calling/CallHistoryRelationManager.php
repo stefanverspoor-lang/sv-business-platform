@@ -27,6 +27,7 @@ class CallHistoryRelationManager extends RelationManager
     {
         return $table
             ->defaultSort('called_at', 'desc')
+            ->emptyStateHeading(__('Nog geen belpogingen'))
             ->modifyQueryUsing(fn ($query) => $query->with('outcome'))
             ->columns([
                 TextColumn::make('called_at')->label(__('Wanneer'))->dateTime('d-m-Y H:i')->sortable(),

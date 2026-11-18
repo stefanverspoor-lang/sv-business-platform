@@ -149,8 +149,9 @@ class CallingReport
 
     protected function perMonth(Builder $attempts, Builder $second, string $secondColumn, string $secondLabel): array
     {
-        $calls = $attempts->get(['called_at'])->groupBy(fn ($a) => $a->called_at->format('Y-m'))->map->count();
-        $other = $second->get([$secondColumn])->groupBy(fn ($a) => Carbon::parse($a->{$secondColumn})->format('Y-m'))->map->count();
+        // Alleen de ruwe datumkolom ophalen (geen modellen): snel, ook bij honderdduizenden pogingen.
+        $calls = $attempts->toBase()->pluck('called_at')->countBy(fn ($v) => substr((string) $v, 0, 7));
+        $other = $second->toBase()->pluck($secondColumn)->countBy(fn ($v) => substr((string) $v, 0, 7));
         $months = $calls->keys()->merge($other->keys())->unique()->sort()->values();
 
         return [

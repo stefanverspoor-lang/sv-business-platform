@@ -41,6 +41,7 @@ Toegang per klant loopt via `access_grants` (in de bedrijfsdatabase).
 | `php artisan crm:create-superadmin e-mail Voornaam Achternaam` | Superadmin aanmaken met een tijdelijk wachtwoord |
 | `php artisan crm:migrate-companies` | Alleen de bedrijfsdatabases bijwerken |
 | `php artisan crm:backup` | Back-up van alle drie de databases (ook dagelijks gepland) |
+| `php artisan crm:retention --dry-run` | Laat zien wat de AVG-bewaartermijnen zouden opruimen (zonder `--dry-run`: uitvoeren; gebeurt ook dagelijks) |
 | `bash deploy.sh` | Nieuwe versie op de server zetten |
 
 ## Mappen op de server
@@ -138,6 +139,28 @@ dat gegevens van SV en YES nooit door elkaar lopen.
   per maand; exports naar Excel en CSV voor de accountant. Geen vervanging van een
   wettelijke boekhouding.
 
+## Dashboard, rapportages en AVG
+
+- Dashboard per bedrijf: jouw taken, ongelezen e-mail en belwachtrij; omzet, uitgaven,
+  openstaande en achterstallige facturen, klanten en projecten; belresultaten van deze maand;
+  grafiek omzet/kosten over 12 maanden; te laat betaalde facturen en je eigen taken. Wat je
+  ziet hangt af van je rechten.
+- Totaaloverzicht (alleen superadmin): alle bedrijven naast elkaar met totalen. Elk bedrijf
+  wordt los uit zijn eigen database gelezen; er worden geen gegevens samengevoegd.
+- Rapportagecentrum: pre-incasso, telemarketing, data-entry, uren, klanten, diensten en
+  campagnes, medewerkers en (superadmin) bedrijven, over elke periode. Exporteren naar Excel,
+  CSV of PDF en handmatig mailen met het rapport als bijlage.
+- Snelheid: samengestelde indexen op de wachtrij-, rapport- en dashboardvelden; getest met
+  50.000 leads, 30.000 dossiers en 100.000 belpogingen (wachtrij < 0,2 s, rapporten < 0,4 s).
+- Beveiliging: beveiligingsheaders (o.a. geen inbedden in andere sites, geen MIME-sniffing,
+  HSTS), verplichte tweestapsverificatie, rechten per rol en per bedrijf, CSV-exports beveiligd
+  tegen formule-injectie, geen API.
+- AVG: knop "Anonimiseren (AVG)" bij een lead of dossier (wist naam, nummers, e-mail, adres en
+  notities; cijfers blijven). Bewaartermijnen in `config/crm.php` (aan te passen via `.env`):
+  afgeronde leads na 12 maanden, afgesloten dossiers na 24 maanden geanonimiseerd,
+  importbestanden na 90 dagen en rapport-exports na 30 dagen verwijderd, audit-log na 24
+  maanden ingekort. Bij "niet meer bellen" blijft alleen het telefoonnummer bewaard.
+
 ## Status
 
 - Fase 0 (inrichting Hostinger): afgerond
@@ -145,4 +168,5 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Fase 2 (klantprofiel, documenten, taken, e-mail): afgerond
 - Fase 3 (telemarketing en pre-incasso): afgerond
 - Fase 4 (websiteprojecten, data-entry, urenregistratie): afgerond
-- Fase 5 (facturatie en financiën): in deze versie
+- Fase 5 (facturatie en financiën): afgerond
+- Fase 6 (dashboard, rapportages, snelheid, beveiliging en AVG): in deze versie

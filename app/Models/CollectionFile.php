@@ -32,6 +32,7 @@ class CollectionFile extends Model
             'original_amount' => 'decimal:2', 'outstanding_amount' => 'decimal:2', 'paid_amount' => 'decimal:2',
             'commission_amount' => 'decimal:2', 'last_called_at' => 'datetime', 'next_call_at' => 'datetime',
             'closed_at' => 'datetime', 'commission_calculated_at' => 'datetime', 'locked_until' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 

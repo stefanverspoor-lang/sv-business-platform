@@ -92,6 +92,7 @@ class Tick extends Command
 
         Artisan::call('crm:backup', [], $this->output);
         Artisan::call('auth:clear-resets', [], $this->output);
+        Artisan::call('crm:retention', [], $this->output);
 
         // Terugkerende facturen (na de back-up)
         $tenants = app(TenantManager::class);
