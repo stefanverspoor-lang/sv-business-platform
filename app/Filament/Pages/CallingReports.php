@@ -8,6 +8,7 @@ use App\Models\Mailbox;
 use App\Support\Imports\Spreadsheet;
 use App\Support\Mail\EmailSender;
 use App\Support\Reports\CallingReport;
+use App\Support\Reports\WorkReport;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -82,10 +83,10 @@ class CallingReports extends Page
             ->columns(['default' => 1, 'md' => 5])
             ->components([
                 ToggleButtons::make('module')->label(__('Rapport'))->inline()->live()
-                    ->options(['collection' => __('Pre-incasso'), 'telemarketing' => __('Telemarketing')])
+                    ->options(['collection' => __('Pre-incasso'), 'telemarketing' => __('Telemarketing'), 'data_entry' => __('Data-entry'), 'hours' => __('Uren')])
                     ->afterStateUpdated(fn ($set) => $set('campaign_id', null)),
                 Select::make('client_id')->label(__('Opdrachtgever'))->placeholder(__('Alle opdrachtgevers'))
-                    ->options(fn () => Client::query()->where(fn ($q) => $q->whereHas('collectionFiles')->orWhereHas('campaigns'))->orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => Client::query()->where(fn ($q) => $q->whereHas('collectionFiles')->orWhereHas('campaigns')->orWhereHas('dataJobs')->orWhereHas('projects'))->orderBy('name')->pluck('name', 'id'))
                     ->searchable()->live()->afterStateUpdated(fn ($set) => $set('campaign_id', null)),
                 Select::make('campaign_id')->label(__('Campagne'))->placeholder(__('Alle campagnes'))
                     ->options(fn (Get $get) => Campaign::query()->when($get('client_id'), fn ($q, $id) => $q->where('client_id', $id))->orderBy('name')->pluck('name', 'id'))
@@ -100,15 +101,29 @@ class CallingReports extends Page
         $f = $this->filters;
         $period = CallingReport::period($f['from'] ?? null, $f['until'] ?? null, FilamentTimezone::get());
 
-        return ($f['module'] ?? 'collection') === 'telemarketing'
-            ? $period->telemarketing($f['client_id'] ? (int) $f['client_id'] : null, $f['campaign_id'] ? (int) $f['campaign_id'] : null)
-            : $period->collection($f['client_id'] ? (int) $f['client_id'] : null);
+        $client = $f['client_id'] ? (int) $f['client_id'] : null;
+        $work = fn () => new WorkReport(
+            \Illuminate\Support\Carbon::parse($f['from'] ?? now()->startOfMonth())->startOfDay(),
+            \Illuminate\Support\Carbon::parse($f['until'] ?? now())->endOfDay(),
+        );
+
+        return match ($f['module'] ?? 'collection') {
+            'telemarketing' => $period->telemarketing($client, $f['campaign_id'] ? (int) $f['campaign_id'] : null),
+            'data_entry' => $work()->dataEntry($client),
+            'hours' => $work()->hoursOverview($client),
+            default => $period->collection($client),
+        };
     }
 
     protected function title(): string
     {
         $f = $this->filters;
-        $parts = [($f['module'] ?? '') === 'telemarketing' ? __('Rapportage telemarketing') : __('Rapportage pre-incasso')];
+        $parts = [match ($f['module'] ?? '') {
+            'telemarketing' => __('Rapportage telemarketing'),
+            'data_entry' => __('Rapportage data-entry'),
+            'hours' => __('Urenoverzicht'),
+            default => __('Rapportage pre-incasso'),
+        }];
         if ($f['client_id'] ?? null) {
             $parts[] = Client::find($f['client_id'])?->name;
         }
@@ -141,7 +156,7 @@ class CallingReports extends Page
                 ->schema($entries),
             Grid::make(['default' => 1, 'lg' => 2])->schema([
                 Section::make(__('Per medewerker'))->schema([Html::make($this->table($report['perUser']))]),
-                Section::make(__('Per gespreksresultaat'))->schema([Html::make($this->table($report['perOutcome']))]),
+                Section::make($report['titles']['perOutcome'] ?? __('Per gespreksresultaat'))->schema([Html::make($this->table($report['perOutcome']))]),
                 Section::make(__('Per maand'))->schema([Html::make($this->table($report['perMonth']))]),
             ]),
         ]);

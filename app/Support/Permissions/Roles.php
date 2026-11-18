@@ -43,6 +43,12 @@ final class Roles
         'commission.manage',  // commissiemodellen per opdrachtgever
         'outcomes.manage',    // gespreksresultaten beheren
         'reports.view',       // rapportages telemarketing en pre-incasso
+        'projects.view_all',  // alle websiteprojecten zien (anders alleen toegewezen)
+        'projects.manage',    // projecten aanmaken, toewijzen, verwijderen
+        'credentials.view',   // wachtwoorden van domein en hosting tonen
+        'data_jobs.view_all', // alle data-entry-opdrachten zien (anders alleen eigen)
+        'data_jobs.manage',   // opdrachten aanmaken, toewijzen, opleveren
+        'time.view_all',      // uren van iedereen zien en corrigeren
         'users.manage',       // gebruikers van het eigen bedrijf beheren
         'audit.view',
     ];
@@ -54,13 +60,14 @@ final class Roles
             self::COMPANY_MANAGER => self::PERMISSIONS,
             self::SUPERVISOR => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
                 'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'templates.manage',
-                'calls.make', 'campaigns.manage', 'leads.view_all', 'collection.manage', 'collection.view_all', 'reports.view'],
+                'calls.make', 'campaigns.manage', 'leads.view_all', 'collection.manage', 'collection.view_all', 'reports.view',
+                'projects.view_all', 'data_jobs.view_all', 'data_jobs.manage', 'time.view_all'],
             self::CALLCENTER => ['clients.view', 'emails.send', 'calls.make'],
-            self::DATA_ENTRY => ['clients.view'],
-            self::PROJECT => ['clients.view', 'documents.upload', 'emails.send'],
+            self::DATA_ENTRY => ['clients.view', 'documents.upload'],
+            self::PROJECT => ['clients.view', 'documents.upload', 'emails.send', 'credentials.view'],
             self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
                 'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage',
-                'collection.view_all', 'reports.view'],
+                'collection.view_all', 'reports.view', 'projects.view_all', 'data_jobs.view_all', 'time.view_all'],
         ];
     }
 

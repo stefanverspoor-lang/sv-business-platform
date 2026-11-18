@@ -102,9 +102,25 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Rapportages per opdrachtgever, campagne, medewerker en periode; export naar Excel en mailen
   vanuit het CRM.
 
+## Websiteprojecten, data-entry en uren
+
+- Websiteprojecten per klant met de statussen uit de briefing, domeinnamen, hosting,
+  onderhoudsafspraken, doorlopende kosten per maand, wijzigingsverzoeken en support, taken,
+  documenten, e-mail en uren. Websites blijven op de hosting van de klant.
+- Inloggegevens van domein en hosting staan versleuteld in de database (`encrypted`-cast met
+  de `APP_KEY`), komen nooit terug in een formulier en zijn alleen te zien via
+  "Inloggegevens" (recht `credentials.view`); elke keer bekijken staat in de audit-log.
+- 30 dagen voor het verlopen van een domeinnaam komt er een melding (via `crm:tick`).
+- Data-entry-opdrachten met medewerkers, aantal records, werkinstructies, bestanden en
+  oplevering. Voortgang (records, fouten, correcties) wordt per medewerker met de uren
+  geregistreerd. De prijs komt uit "Diensten en prijzen" van de klant.
+- Urenregistratie voor iedereen; eigen uren zijn 14 dagen zelf aan te passen.
+- Rapportages: productiviteit data-entry en urenoverzicht, per medewerker en periode.
+
 ## Status
 
 - Fase 0 (inrichting Hostinger): afgerond
 - Fase 1 (fundament): afgerond
 - Fase 2 (klantprofiel, documenten, taken, e-mail): afgerond
-- Fase 3 (telemarketing en pre-incasso): in deze versie
+- Fase 3 (telemarketing en pre-incasso): afgerond
+- Fase 4 (websiteprojecten, data-entry, urenregistratie): in deze versie

@@ -65,6 +65,22 @@ class ViewEmail extends ViewRecord
                     app(MessageStore::class)->link($this->record, $client);
                     Notification::make()->success()->title(__('Gekoppeld aan :name', ['name' => $client->name]))->send();
                 }),
+            Action::make('linkProject')
+                ->label(__('Koppelen aan project'))
+                ->icon(Heroicon::OutlinedGlobeAlt)
+                ->color('gray')
+                ->visible(fn () => \App\Models\Project::query()->visibleTo(auth()->user())->exists())
+                ->schema([
+                    Select::make('project_id')->label(__('Websiteproject'))
+                        ->options(fn () => \App\Models\Project::query()->visibleTo(auth()->user())->with('client')->orderBy('name')->get()
+                            ->mapWithKeys(fn ($p) => [$p->id => $p->name.' ('.$p->client?->name.')']))
+                        ->searchable()->required(),
+                ])
+                ->action(function (array $data) {
+                    $project = \App\Models\Project::query()->visibleTo(auth()->user())->findOrFail($data['project_id']);
+                    app(MessageStore::class)->link($this->record, $project);
+                    Notification::make()->success()->title(__('Gekoppeld aan :name', ['name' => $project->name]))->send();
+                }),
             Action::make('assign')
                 ->label(__('Toewijzen'))
                 ->icon(Heroicon::OutlinedUserPlus)

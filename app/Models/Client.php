@@ -71,6 +71,16 @@ class Client extends Model
         return $this->hasMany(CollectionFile::class);
     }
 
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    public function dataJobs(): HasMany
+    {
+        return $this->hasMany(DataJob::class);
+    }
+
     public function commissionModels(): HasMany
     {
         return $this->hasMany(CommissionModel::class);

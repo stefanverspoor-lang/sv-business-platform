@@ -62,6 +62,7 @@ class Tick extends Command
             $tenants->runFor($company, function () use ($company, $syncMail) {
                 try {
                     app(TaskReminders::class)->send($company);
+                    app(\App\Support\DomainExpiryReminders::class)->send($company);
 
                     if ($syncMail) {
                         foreach (Mailbox::where('is_active', true)->get() as $mailbox) {

@@ -171,7 +171,8 @@ class CallingReport
         foreach ($report['summary'] as $label => $value) {
             $rows[] = [$label, $value];
         }
-        foreach (['perUser' => __('Per medewerker'), 'perOutcome' => __('Per gespreksresultaat'), 'perMonth' => __('Per maand')] as $key => $heading) {
+        $headings = ['perUser' => __('Per medewerker'), 'perOutcome' => __('Per gespreksresultaat'), 'perMonth' => __('Per maand')];
+        foreach (array_merge($headings, $report['titles'] ?? []) as $key => $heading) {
             $rows[] = [];
             $rows[] = [$heading];
             $rows[] = $report[$key]['headers'];

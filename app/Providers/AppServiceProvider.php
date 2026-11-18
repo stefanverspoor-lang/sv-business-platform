@@ -54,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\CommissionModel::class, \App\Policies\CommissionModelPolicy::class);
         Gate::policy(\App\Models\CallOutcome::class, \App\Policies\CallOutcomePolicy::class);
         Gate::policy(\App\Models\DataImport::class, \App\Policies\DataImportPolicy::class);
+        Gate::policy(\App\Models\Project::class, \App\Policies\ProjectPolicy::class);
+        Gate::policy(\App\Models\DataJob::class, \App\Policies\DataJobPolicy::class);
+        Gate::policy(\App\Models\TimeEntry::class, \App\Policies\TimeEntryPolicy::class);
 
         // Vaste korte namen in de database voor gekoppelde onderdelen,
         // zodat ze niet afhangen van klassenamen in de code.
@@ -72,6 +75,9 @@ class AppServiceProvider extends ServiceProvider
             'payment_agreement' => \App\Models\PaymentAgreement::class,
             'commission_model' => \App\Models\CommissionModel::class,
             'call_outcome' => \App\Models\CallOutcome::class,
+            'project' => \App\Models\Project::class,
+            'project_request' => \App\Models\ProjectRequest::class,
+            'data_job' => \App\Models\DataJob::class,
         ]);
 
         Event::listen(Login::class, function (Login $event) {

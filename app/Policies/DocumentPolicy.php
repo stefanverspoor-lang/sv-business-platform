@@ -19,7 +19,8 @@ class DocumentPolicy
     public function view(User $user, Document $document): bool
     {
         $owner = $document->documentable;
-        if ($owner instanceof \App\Models\Lead || $owner instanceof \App\Models\CollectionFile) {
+        if ($owner instanceof \App\Models\Lead || $owner instanceof \App\Models\CollectionFile
+            || $owner instanceof \App\Models\Project || $owner instanceof \App\Models\DataJob) {
             return $user->can('view', $owner);
         }
         $client = match (true) {
