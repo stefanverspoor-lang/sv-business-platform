@@ -64,7 +64,7 @@ class UserResource extends Resource
                 TextInput::make('name')->label(__('Naam'))->required()->maxLength(255),
                 TextInput::make('email')->label(__('E-mailadres'))->email()->required()
                     ->unique('central.users', 'email', ignoreRecord: true),
-                TextInput::make('password')->label(__('Wachtwoord'))->password()->revealable()
+                TextInput::make('password')->label(__('Wachtwoord'))->password()->revealable()->autocomplete('new-password')
                     ->rule(Password::defaults())
                     ->required(fn (string $operation) => $operation === 'create')
                     ->dehydrated(fn (?string $state) => filled($state))

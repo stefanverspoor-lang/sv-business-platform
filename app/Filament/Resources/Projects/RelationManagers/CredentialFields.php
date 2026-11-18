@@ -26,7 +26,7 @@ class CredentialFields
                 : TextInput::make($field)->maxLength(500);
 
             if ($field === 'password') {
-                $input->password()->revealable();
+                $input->password()->revealable()->autocomplete('new-password')->extraInputAttributes(['data-lpignore' => 'true', 'data-1p-ignore' => 'true']);
             }
 
             return $input->label($label)

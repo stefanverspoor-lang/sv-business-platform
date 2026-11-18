@@ -67,9 +67,12 @@ class MailboxResource extends Resource
                         ->unique(ignoreRecord: true)
                         ->live(onBlur: true)
                         ->afterStateUpdated(fn ($state, $set, $get) => blank($get('username')) ? $set('username', $state) : null),
-                    TextInput::make('username')->label(__('Gebruikersnaam'))->required()->maxLength(255)
+                    TextInput::make('username')->label(__('Gebruikersnaam'))->required()->maxLength(255)->autocomplete('off')
                         ->helperText(__('Bij Hostinger is dit het volledige e-mailadres')),
                     TextInput::make('password')->label(__('Wachtwoord van de mailbox'))->password()->revealable()
+                        // Voorkomt dat de browser hier het CRM-wachtwoord invult (dat overschrijft dan het mailboxwachtwoord).
+                        ->autocomplete('new-password')
+                        ->extraInputAttributes(['data-lpignore' => 'true', 'data-1p-ignore' => 'true'])
                         ->required(fn (string $operation) => $operation === 'create')
                         ->dehydrated(fn ($state) => filled($state))
                         ->helperText(__('Wordt versleuteld opgeslagen. Leeg laten = niet wijzigen.')),
