@@ -73,12 +73,19 @@ class PdfRenderer
         return $kind.'-'.str_replace(['/', '\\', ' '], '-', $document->number ?? 'concept-'.$document->id).'.pdf';
     }
 
+    /** Alle regels hebben het tarief "Geen btw" (of geen tarief) en 0%. */
+    public static function withoutVat($lines): bool
+    {
+        return $lines->isNotEmpty() && $lines->every(fn ($l) => (float) $l->vat_rate == 0.0
+            && ($l->vat_rate_id === null || $l->vatRateModel?->kind === 'none'));
+    }
+
     protected function data(Invoice|Quote $document, ?Company $company, string $locale): array
     {
         $settings = BillingSettings::all();
         $lines = $document->lines()->with('vatRateModel')->get();
         $client = $document->client_snapshot ?: ClientSnapshot::make($document->client, $document->contact);
-        $companyData = ($document instanceof Invoice ? $document->company_snapshot : null) ?: CompanySnapshot::make($company, $settings);
+        $companyData = ($document instanceof Invoice ? $document->company_snapshot : null) ?: CompanySnapshot::make($company, $settings, $document->bankAccount ?? \App\Models\BankAccount::forCurrency($document->currency));
 
         $logo = null;
         if ($settings['logo_path'] && Storage::disk('local')->exists($settings['logo_path'])) {
@@ -105,6 +112,9 @@ class PdfRenderer
             'kind' => $document instanceof Quote ? 'quote' : ($document->isCreditNote() ? 'credit_note' : 'invoice'),
             'lines' => $lines,
             'vat' => $document->vatBreakdown($lines),
+            // "Geen btw" op alle regels: btw helemaal weglaten, alleen het nettobedrag.
+            'showVat' => ! static::withoutVat($lines),
+            'showBank' => $document instanceof Invoice && ! $document->isCreditNote(),
             'client' => $client,
             'company' => $companyData,
             'logo' => $logo,

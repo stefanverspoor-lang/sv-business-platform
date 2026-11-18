@@ -15,7 +15,7 @@ class EmailMessage extends Model
     protected $fillable = [
         'mailbox_id', 'folder', 'uid', 'direction', 'message_id', 'in_reply_to', 'thread_key',
         'subject', 'from_email', 'from_name', 'to', 'cc', 'sent_at', 'body_text', 'body_html',
-        'is_read', 'has_attachments', 'assigned_to', 'sent_by',
+        'is_read', 'has_attachments', 'assigned_to', 'sent_by', 'is_spam',
     ];
 
     protected function casts(): array
@@ -25,6 +25,7 @@ class EmailMessage extends Model
             'cc' => 'array',
             'sent_at' => 'datetime',
             'is_read' => 'boolean',
+            'is_spam' => 'boolean',
             'has_attachments' => 'boolean',
         ];
     }

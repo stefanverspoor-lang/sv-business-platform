@@ -90,7 +90,7 @@ class CompanyMetrics
             'pc_files_open' => CollectionFile::query()->whereIn('status', CollectionStatus::open())->count(),
             'tasks_open' => Task::query()->open()->count(),
             'tasks_overdue' => Task::query()->overdue()->count(),
-            'emails_unread' => EmailMessage::where('direction', 'in')->where('is_read', false)->count(),
+            'emails_unread' => EmailMessage::where('direction', 'in')->where('is_spam', false)->where('is_read', false)->count(),
         ];
     }
 
@@ -101,7 +101,7 @@ class CompanyMetrics
             'tasks_open' => Task::query()->visibleTo($this->user)->open()->count(),
             'tasks_overdue' => Task::query()->visibleTo($this->user)->overdue()->count(),
             'tasks_mine_today' => Task::query()->open()->where('assigned_to', $this->user->getKey())->where('due_at', '<=', now()->endOfDay())->count(),
-            'emails_unread' => EmailMessage::query()->visibleTo($this->user)->where('direction', 'in')->where('is_read', false)->count(),
+            'emails_unread' => EmailMessage::query()->visibleTo($this->user)->where('direction', 'in')->where('is_spam', false)->where('is_read', false)->count(),
             'calls_ready' => $this->user->can('calls.make')
                 ? app(\App\Support\Calling\CallQueue::class)->count($this->user, 'leads') + app(\App\Support\Calling\CallQueue::class)->count($this->user, 'collection')
                 : 0,

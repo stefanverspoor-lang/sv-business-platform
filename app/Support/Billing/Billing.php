@@ -38,6 +38,7 @@ class Billing
             'locale' => app(TenantManager::class)->current()?->default_locale ?: 'nl',
             'currency' => $currency,
             'base_currency' => BillingSettings::baseCurrency(),
+            'bank_account_id' => \App\Models\BankAccount::forCurrency($currency)?->id,
             'exchange_rate' => \App\Models\ExchangeRate::lookup($currency, BillingSettings::baseCurrency(), $issue) ?? 1,
             'created_by' => auth()->id(),
         ];
@@ -67,7 +68,8 @@ class Billing
                 'due_date' => $invoice->isCreditNote() ? null : ($invoice->due_date ?? $issue->copy()->addDays($invoice->payment_terms_days)),
                 'finalized_at' => now(),
                 'client_snapshot' => ClientSnapshot::make($invoice->client, $invoice->contact),
-                'company_snapshot' => CompanySnapshot::make(app(TenantManager::class)->current()),
+                'company_snapshot' => CompanySnapshot::make(app(TenantManager::class)->current(), null,
+                    $invoice->bankAccount ?? \App\Models\BankAccount::forCurrency($invoice->currency)),
             ])->save();
         });
 
@@ -145,6 +147,7 @@ class Billing
                 'currency' => $quote->currency,
                 'subject' => $quote->subject,
                 'quote_id' => $quote->id,
+                'bank_account_id' => $quote->bank_account_id,
                 'reference' => $quote->number,
             ]));
             $this->copyLines($quote, $invoice);
@@ -171,6 +174,7 @@ class Billing
                 'currency' => $invoice->currency,
                 'exchange_rate' => $invoice->exchange_rate,
                 'credited_invoice_id' => $invoice->id,
+                'bank_account_id' => $invoice->bank_account_id,
                 'subject' => ($invoice->locale === 'en' ? 'Credit note for invoice ' : 'Creditering van factuur ').$invoice->number,
                 'issue_date' => now()->toDateString(),
                 'due_date' => null,
@@ -192,6 +196,7 @@ class Billing
             'subject' => $invoice->subject,
             'intro' => $invoice->intro,
             'notes' => $invoice->notes,
+            'bank_account_id' => $invoice->bank_account_id,
         ]));
         $this->copyLines($invoice, $copy, keepSource: false);
         $copy->recalculateTotals();
@@ -232,6 +237,7 @@ class Billing
                 'subject' => $recurring->subject ? $this->placeholders($recurring->subject, $issue, $period) : null,
                 'notes' => $recurring->notes,
                 'recurring_invoice_id' => $recurring->id,
+                'bank_account_id' => $recurring->bank_account_id,
             ]));
 
             foreach ($recurring->lines as $line) {

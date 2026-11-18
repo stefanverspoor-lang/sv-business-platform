@@ -54,4 +54,9 @@ class Quote extends Model
     {
         return $this->number ?? __('Concept #:id', ['id' => $this->id]);
     }
+
+    public function bankAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 }

@@ -14,7 +14,7 @@ class Mailbox extends Model
     protected $fillable = [
         'name', 'email', 'username', 'password', 'imap_host', 'imap_port', 'imap_encryption',
         'smtp_host', 'smtp_port', 'smtp_encryption', 'sent_folder', 'sync_since', 'is_active',
-        'default_assignee', 'sync_state', 'last_synced_at', 'last_error',
+        'default_assignee', 'sync_state', 'last_synced_at', 'last_error', 'signature', 'signature_logo_path', 'spam_folder',
     ];
 
     protected $hidden = ['password'];
@@ -39,6 +39,6 @@ class Mailbox extends Model
 
     public function unreadCount(): int
     {
-        return $this->messages()->where('direction', 'in')->where('is_read', false)->count();
+        return $this->messages()->where('direction', 'in')->where('is_spam', false)->where('is_read', false)->count();
     }
 }

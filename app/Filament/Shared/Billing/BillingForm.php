@@ -3,6 +3,7 @@
 namespace App\Filament\Shared\Billing;
 
 use App\Filament\Shared\Currencies;
+use App\Models\BankAccount;
 use App\Models\BillingLine;
 use App\Models\Client;
 use App\Models\Contact;
@@ -39,7 +40,7 @@ class BillingForm
         ];
     }
 
-    public static function languageAndCurrency(bool $withRate = true): array
+    public static function languageAndCurrency(bool $withRate = true, bool $withBank = true): array
     {
         $base = fn () => BillingSettings::baseCurrency();
 
@@ -48,6 +49,9 @@ class BillingForm
             Select::make('currency')->label(__('Valuta'))->options(Currencies::options())->default($base)->required()->live()
                 ->afterStateUpdated(function ($state, Get $get, Set $set) use ($base) {
                     $set('exchange_rate', ExchangeRate::lookup((string) $state, $base(), $get('issue_date')) ?? null);
+                    if ($account = BankAccount::forCurrency((string) $state)) {
+                        $set('bank_account_id', $account->id);
+                    }
                 }),
             $withRate ? TextInput::make('exchange_rate')
                 ->label(fn () => __('Wisselkoers naar :base', ['base' => $base()]))
@@ -55,6 +59,12 @@ class BillingForm
                 ->visible(fn (Get $get) => $get('currency') && $get('currency') !== $base())
                 ->required(fn (Get $get) => $get('currency') && $get('currency') !== $base())
                 ->helperText(fn (Get $get) => __('1 :cur = ... :base. Wordt ingevuld uit Wisselkoersen als die bekend is.', ['cur' => $get('currency'), 'base' => $base()])) : null,
+            $withBank ? Select::make('bank_account_id')->label(__('Bankrekening op de factuur'))
+                ->options(fn () => BankAccount::options())
+                ->default(fn () => BankAccount::forCurrency(BillingSettings::baseCurrency())?->id)
+                ->placeholder(__('Standaardrekening'))
+                ->visible(fn () => BankAccount::active()->exists())
+                ->helperText(__('Wordt voorgesteld op basis van de valuta. Rekeningen beheer je onder Facturatie → Bankrekeningen.')) : null,
         ]));
     }
 

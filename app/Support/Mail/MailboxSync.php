@@ -11,7 +11,8 @@ use Webklex\PHPIMAP\IMAP;
 use Webklex\PHPIMAP\Message;
 
 /**
- * Haalt nieuwe berichten op uit een mailbox (Postvak IN en Verzonden).
+ * Haalt nieuwe berichten op uit een mailbox (Postvak IN, Spam en Verzonden).
+ * Spam wordt ook opgehaald (gemarkeerd als spam), zodat je niets mist.
  *
  * Werkt per map met de IMAP-UID: alleen berichten met een hogere UID dan de
  * vorige keer worden opgehaald. Per run een beperkt aantal, zodat de cron-taak
@@ -44,9 +45,13 @@ class MailboxSync
             if ($sent) {
                 $folders[$sent] = 'out';
             }
+            $spam = $this->spamFolder($client, $mailbox);
 
             foreach ($folders as $path => $direction) {
                 $count += $this->syncFolder($client, $mailbox, $path, $direction);
+            }
+            if ($spam) {
+                $count += $this->syncFolder($client, $mailbox, $spam, 'in', spam: true);
             }
 
             $mailbox->forceFill([
@@ -62,7 +67,7 @@ class MailboxSync
         return $count;
     }
 
-    protected function syncFolder(Client $client, Mailbox $mailbox, string $path, string $direction): int
+    protected function syncFolder(Client $client, Mailbox $mailbox, string $path, string $direction, bool $spam = false): int
     {
         $folder = $client->getFolderByPath($path, soft_fail: true);
         if (! $folder) {
@@ -88,7 +93,7 @@ class MailboxSync
         foreach ($uids->take(self::PER_RUN) as $uid) {
             try {
                 $message = $folder->query()->getMessageByUid($uid);
-                if ($message instanceof Message && $this->store->storeImapMessage($mailbox, $path, $direction, $uid, $message)) {
+                if ($message instanceof Message && $this->store->storeImapMessage($mailbox, $path, $direction, $uid, $message, $spam)) {
                     $new++;
                 }
             } catch (Throwable $e) {
@@ -101,6 +106,38 @@ class MailboxSync
         }
 
         return $new;
+    }
+
+    /** Zoekt de spam-map (Hostinger: INBOX.Junk of INBOX.Spam). */
+    protected function spamFolder(Client $client, Mailbox $mailbox): ?string
+    {
+        if ($mailbox->spam_folder && $client->getFolderByPath($mailbox->spam_folder, soft_fail: true)) {
+            return $mailbox->spam_folder;
+        }
+
+        /** @var Folder|null $found */
+        $found = $client->getFolders(false, null, true)->first(
+            fn (Folder $f) => preg_match('/(^|[.\/])(junk|spam|junk e-mail|junk email|bulk mail|ongewenste e-mail|ongewenste mail)$/i', $f->path)
+        );
+
+        if ($found) {
+            $mailbox->forceFill(['spam_folder' => $found->path])->save();
+
+            return $found->path;
+        }
+
+        return null;
+    }
+
+    /** Zoekt de prullenbak (voor verwijderen op de mailserver). */
+    public static function trashFolder(Client $client): ?string
+    {
+        /** @var Folder|null $found */
+        $found = $client->getFolders(false, null, true)->first(
+            fn (Folder $f) => preg_match('/(^|[.\/])(trash|deleted|deleted items|deleted messages|bin|prullenbak|verwijderde items)$/i', $f->path)
+        );
+
+        return $found?->path;
     }
 
     /** Zoekt de map met verzonden berichten (naam verschilt per mailserver). */

@@ -47,4 +47,9 @@ class RecurringInvoice extends Model
 
     /** Totalen bestaan niet op het sjabloon; alleen op facturen en offertes. */
     public function recalculateTotals(): void {}
+
+    public function bankAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 }

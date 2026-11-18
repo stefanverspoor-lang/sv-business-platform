@@ -27,9 +27,18 @@ class MessageStore
 {
     public const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 
-    public function storeImapMessage(Mailbox $mailbox, string $folder, string $direction, int $uid, Message $message): ?EmailMessage
+    public function storeImapMessage(Mailbox $mailbox, string $folder, string $direction, int $uid, Message $message, bool $spam = false): ?EmailMessage
     {
         $messageId = $this->clean((string) $message->getMessageId());
+
+        // Hetzelfde bericht al binnen (bijv. in de mailbox van spam naar Postvak IN verplaatst): niet dubbel opslaan.
+        if ($messageId && $direction === 'in' && $existing = EmailMessage::where('mailbox_id', $mailbox->id)->where('message_id', $messageId)->where('direction', 'in')->first()) {
+            if ($existing->is_spam && ! $spam) {
+                $existing->update(['is_spam' => false, 'folder' => $folder, 'uid' => $uid]);
+            }
+
+            return null;
+        }
 
         // Zelf verstuurd vanuit het CRM: alleen de UID aanvullen.
         if ($messageId && $existing = EmailMessage::where('mailbox_id', $mailbox->id)->where('message_id', $messageId)->whereNull('uid')->first()) {
@@ -80,6 +89,7 @@ class MessageStore
             'body_text' => $text,
             'body_html' => $html,
             'is_read' => $direction === 'out',
+            'is_spam' => $spam,
         ]);
         $email->thread_key = $this->threadKey($email);
         $email->save();

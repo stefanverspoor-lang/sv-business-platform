@@ -70,7 +70,7 @@ class QuoteResource extends Resource
                     ...BillingForm::clientFields(),
                     DatePicker::make('issue_date')->label(__('Datum'))->default(now())->required(),
                     DatePicker::make('valid_until')->label(__('Geldig tot')),
-                    ...BillingForm::languageAndCurrency(withRate: false),
+                    ...BillingForm::languageAndCurrency(withRate: false, withBank: false),
                 ]),
             Section::make(__('Regels'))->columnSpanFull()->schema([BillingForm::linesRepeater(), BillingForm::liveTotals()]),
             BillingForm::textFields()->columnSpanFull(),

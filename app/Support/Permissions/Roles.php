@@ -33,6 +33,7 @@ final class Roles
         'tasks.manage',       // taken aan anderen toewijzen en alle taken wijzigen
         'emails.view_all',    // alle e-mail van het bedrijf zien (anders alleen toegewezen)
         'emails.send',
+        'emails.delete',      // e-mail verwijderen (ook uit de mailbox)
         'mailboxes.manage',
         'templates.manage',
         'calls.make',         // belscherm gebruiken (eigen toegewezen leads en dossiers)
@@ -65,14 +66,14 @@ final class Roles
         return [
             self::COMPANY_MANAGER => self::PERMISSIONS,
             self::SUPERVISOR => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
-                'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'templates.manage',
+                'documents.upload', 'tasks.view_all', 'tasks.manage', 'emails.view_all', 'emails.send', 'emails.delete', 'templates.manage',
                 'calls.make', 'campaigns.manage', 'leads.view_all', 'collection.manage', 'collection.view_all', 'reports.view',
                 'projects.view_all', 'data_jobs.view_all', 'data_jobs.manage', 'time.view_all'],
             self::CALLCENTER => ['clients.view', 'emails.send', 'calls.make'],
             self::DATA_ENTRY => ['clients.view', 'documents.upload'],
             self::PROJECT => ['clients.view', 'documents.upload', 'emails.send', 'credentials.view'],
             self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
-                'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage',
+                'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'emails.delete', 'templates.manage',
                 'collection.view_all', 'reports.view', 'projects.view_all', 'data_jobs.view_all', 'time.view_all',
                 'invoices.view', 'invoices.manage', 'payments.manage', 'finance.view', 'finance.manage'],
         ];

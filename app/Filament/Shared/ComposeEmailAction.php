@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -54,12 +55,14 @@ class ComposeEmailAction
                     'mailbox_id' => $reply?->mailbox_id ?? Mailbox::where('is_active', true)->orderBy('id')->value('id'),
                     'to' => array_values(array_filter($to)),
                     'subject' => $reply ? (Str::startsWith(Str::lower((string) $reply->subject), 're:') ? $reply->subject : 'Re: '.$reply->subject) : null,
-                    'body' => $reply ? "\n\n".static::quote($reply) : null,
+                    'body' => null,
+                    'signature' => true,
+                    'include_quote' => true,
                     'client_id' => $c?->getKey(),
                 ];
             })
             ->schema(fn () => [
-                Select::make('mailbox_id')->label(__('Versturen vanaf'))
+                Select::make('mailbox_id')->label(__('Versturen vanaf'))->live()
                     ->options(fn () => Mailbox::where('is_active', true)->orderBy('name')->get()->mapWithKeys(fn ($m) => [$m->id => "{$m->name} <{$m->email}>"]))
                     ->required(),
                 TagsInput::make('to')->label(__('Aan'))->placeholder(__('E-mailadres + Enter'))
@@ -91,6 +94,11 @@ class ComposeEmailAction
                     }),
                 TextInput::make('subject')->label(__('Onderwerp'))->required()->maxLength(255),
                 Textarea::make('body')->label(__('Bericht'))->rows(12)->required(),
+                Toggle::make('signature')->label(__('Handtekening toevoegen'))->default(true)
+                    ->visible(fn (Get $get) => ($m = Mailbox::find($get('mailbox_id'))) && ($m->signature || $m->signature_logo_path))
+                    ->helperText(__('Instellen per mailbox onder Beheer → Mailboxen.')),
+                Toggle::make('include_quote')->label(__('Oorspronkelijk bericht onderaan meesturen'))->default(true)
+                    ->visible(fn () => (bool) $replyTo()),
                 FileUpload::make('attachments')->label(__('Bijlagen'))
                     ->multiple()
                     ->disk('local')
@@ -119,6 +127,8 @@ class ComposeEmailAction
                         $replyTo(),
                         $attachments,
                         $linkTo,
+                        withSignature: (bool) ($data['signature'] ?? true),
+                        quote: ($reply = $replyTo()) && ($data['include_quote'] ?? true) ? static::quote($reply) : null,
                     );
                 } catch (Throwable $e) {
                     report($e);

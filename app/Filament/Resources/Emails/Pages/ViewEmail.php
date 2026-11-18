@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Emails\Pages;
 
 use App\Filament\Resources\Clients\ClientResource;
+use App\Filament\Resources\Emails\DeleteEmailAction;
 use App\Filament\Resources\Emails\EmailResource;
 use App\Filament\Shared\ComposeEmailAction;
 use App\Models\Client;
@@ -96,7 +97,25 @@ class ViewEmail extends ViewRecord
                     Audit::log('email_assigned', $this->record, ['assigned_to' => $data['assigned_to']]);
                     Notification::make()->success()->title(__('Toegewezen'))->send();
                 }),
+            Action::make('notSpam')
+                ->label(__('Geen spam'))
+                ->icon(Heroicon::OutlinedShieldCheck)
+                ->color('success')
+                ->visible(fn () => $this->record->is_spam)
+                ->action(function () {
+                    $this->record->update(['is_spam' => false]);
+                    Notification::make()->success()->title(__('Verplaatst naar Postvak IN'))->send();
+                }),
+            DeleteEmailAction::make(fn () => $this->redirect(EmailResource::getUrl('index'))),
             ActionGroup::make([
+                Action::make('markSpam')
+                    ->label(__('Markeren als spam'))
+                    ->icon(Heroicon::OutlinedShieldExclamation)
+                    ->visible(fn () => $this->record->direction === 'in' && ! $this->record->is_spam)
+                    ->action(function () {
+                        $this->record->update(['is_spam' => true]);
+                        $this->redirect(EmailResource::getUrl('index'));
+                    }),
                 Action::make('markUnread')
                     ->label(__('Markeren als ongelezen'))
                     ->icon(Heroicon::OutlinedEnvelope)

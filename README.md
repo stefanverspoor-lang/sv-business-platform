@@ -41,6 +41,7 @@ Toegang per klant loopt via `access_grants` (in de bedrijfsdatabase).
 | `php artisan crm:create-superadmin e-mail Voornaam Achternaam` | Superadmin aanmaken met een tijdelijk wachtwoord |
 | `php artisan crm:migrate-companies` | Alleen de bedrijfsdatabases bijwerken |
 | `php artisan crm:backup` | Back-up van alle drie de databases (ook dagelijks gepland) |
+| `php artisan crm:reset-data` | Testgegevens wissen: klanten, leads, dossiers, projecten, uren, offertes, facturen, uitgaven (met back-up vooraf). Mailboxen, e-mail, instellingen, btw-tarieven en bankrekeningen blijven. Factuurnummers beginnen weer bij 0001 |
 | `php artisan crm:retention --dry-run` | Laat zien wat de AVG-bewaartermijnen zouden opruimen (zonder `--dry-run`: uitvoeren; gebeurt ook dagelijks) |
 | `bash deploy.sh` | Nieuwe versie op de server zetten |
 
@@ -75,6 +76,10 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Vanuit het CRM verstuurde mail gaat via SMTP en komt ook in de map Verzonden te staan.
 - HTML-mail wordt opgeschoond (geen scripts, formulieren of externe afbeeldingen) en in een
   afgeschermd kader getoond.
+
+- Handtekening per mailbox (tekst met {naam} en {email}, plus logo), per bericht uit te zetten.
+- Spam wordt ook opgehaald en staat in het tabblad Spam ("Geen spam" zet hem terug).
+- E-mail verwijderen (los of in bulk), standaard ook uit de mailbox (naar de prullenbak).
 
 ## Taken
 
@@ -119,6 +124,12 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Rapportages: productiviteit data-entry en urenoverzicht, per medewerker en periode.
 
 ## Facturatie en financiën
+
+- Meerdere bankrekeningen (Facturatie → Bankrekeningen), per factuur te kiezen; bij een
+  valuta wordt de rekening in die valuta voorgesteld. Betaalgegevens (rekeninghouder, bank,
+  IBAN/rekeningnummer, BIC/SWIFT, extra regels) staan op de factuur.
+- Factuur met alleen "Geen btw": geen btw-kolom, geen subtotaal/btw-regels en geen
+  btw-nummers, alleen het nettobedrag.
 
 - Offertes, facturen en creditnota's per bedrijf, in het Nederlands of Engels en in elke valuta
   (EUR, IDR, USD ...), met de wisselkoers naar de basisvaluta vastgelegd per document.

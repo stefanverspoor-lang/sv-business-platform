@@ -41,7 +41,17 @@ class EmailSender
         ?EmailMessage $replyTo = null,
         array $attachmentPaths = [],
         array $linkTo = [],
+        bool $withSignature = true,
+        ?string $quote = null,
     ): EmailMessage {
+        $signature = $withSignature ? Signature::for($mailbox) : null;
+        $wrap = fn (string $inner) => '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#222">'.$inner.'</div>';
+        $quoteHtml = $quote !== null && trim($quote) !== ''
+            ? '<blockquote style="margin:16px 0 0 0;padding-left:10px;border-left:2px solid #ccc;color:#555">'.nl2br(e($quote)).'</blockquote>' : '';
+        $text = rtrim($body).($signature ? "\n\n-- \n".$signature->text : '').($quoteHtml ? "\n\n".$quote : '');
+        $html = $wrap(nl2br(e(rtrim($body))).($signature?->toHtml() ?? '').$quoteHtml);
+        $storedHtml = $wrap(nl2br(e(rtrim($body))).($signature?->toHtml(forStorage: true) ?? '').$quoteHtml);
+
         $domain = Str::after($mailbox->email, '@');
         $messageId = Str::uuid()->toString().'@'.$domain;
 
@@ -49,8 +59,11 @@ class EmailSender
             ->from(new Address($mailbox->email, $mailbox->name))
             ->to(...$to)
             ->subject($subject)
-            ->text($body)
-            ->html(nl2br(e($body)));
+            ->text($text)
+            ->html($html);
+        if ($signature?->logoPath) {
+            $email->embed(Storage::disk('local')->get($signature->logoPath), Signature::LOGO_CID, $signature->logoMime);
+        }
         if ($cc) {
             $email->cc(...$cc);
         }
@@ -85,8 +98,8 @@ class EmailSender
             'from_name' => $mailbox->name,
             'to' => array_map(fn ($a) => ['email' => strtolower($a), 'name' => null], $to),
             'cc' => array_map(fn ($a) => ['email' => strtolower($a), 'name' => null], $cc),
-            'body_text' => $body,
-            'body_html' => HtmlCleaner::clean(nl2br(e($body))),
+            'body_text' => $text,
+            'body_html' => HtmlCleaner::clean($storedHtml),
             'sent_by' => auth()->id(),
             'has_attachments' => (bool) $attachmentPaths,
         ]);

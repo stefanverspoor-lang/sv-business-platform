@@ -61,7 +61,7 @@ class EmailResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = EmailMessage::query()->visibleTo(auth()->user())->where('direction', 'in')->where('is_read', false)->count();
+        $count = EmailMessage::query()->visibleTo(auth()->user())->where('direction', 'in')->where('is_spam', false)->where('is_read', false)->count();
 
         return $count ?: null;
     }
@@ -92,6 +92,11 @@ class EmailResource extends Resource
                         ->action(fn (Collection $records) => $records->each->update(['is_read' => true])),
                     BulkAction::make('markUnread')->label(__('Markeren als ongelezen'))->icon(Heroicon::OutlinedEnvelope)
                         ->action(fn (Collection $records) => $records->where('direction', 'in')->each->update(['is_read' => false])),
+                    BulkAction::make('notSpam')->label(__('Geen spam'))->icon(Heroicon::OutlinedShieldCheck)
+                        ->action(fn (Collection $records) => $records->each->update(['is_spam' => false])),
+                    BulkAction::make('markSpam')->label(__('Markeren als spam'))->icon(Heroicon::OutlinedShieldExclamation)
+                        ->action(fn (Collection $records) => $records->where('direction', 'in')->each->update(['is_spam' => true])),
+                    DeleteEmailAction::bulk(),
                 ]),
             ]);
     }

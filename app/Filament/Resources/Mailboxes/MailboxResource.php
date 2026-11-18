@@ -13,6 +13,8 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -79,6 +81,19 @@ class MailboxResource extends Resource
                         ->helperText(__('Alleen bij de eerste keer ophalen')),
                     Toggle::make('is_active')->label(__('Actief'))->default(true),
                 ]),
+            Section::make(__('Handtekening'))
+                ->description(__('Komt onder elke e-mail vanuit deze mailbox (uit te zetten per bericht). {naam} wordt de naam van wie verstuurt, {email} het adres van de mailbox.'))
+                ->columns(['default' => 1, 'lg' => 3])
+                ->schema([
+                    RichEditor::make('signature')->label(__('Tekst'))->columnSpan(['lg' => 2])
+                        ->toolbarButtons([['bold', 'italic', 'underline', 'link'], ['bulletList'], ['undo', 'redo']])
+                        ->placeholder(__("Met vriendelijke groet,\n{naam}\nSV Business Support\n+62 ...")),
+                    FileUpload::make('signature_logo_path')->label(__('Logo (optioneel)'))
+                        ->image()->disk('local')->visibility('private')
+                        ->directory(fn () => 'companies/'.\Filament\Facades\Filament::getTenant()->slug.'/signatures')
+                        ->maxSize(512)
+                        ->helperText(__('PNG of JPG, maximaal 512 kB. Wordt meegestuurd in de e-mail.')),
+                ]),
             Section::make(__('Serverinstellingen'))
                 ->description(__('Standaard ingevuld voor Hostinger. Alleen aanpassen bij een andere provider.'))
                 ->collapsed(fn (string $operation) => $operation === 'create')
@@ -92,6 +107,8 @@ class MailboxResource extends Resource
                     Select::make('smtp_encryption')->label(__('Beveiliging'))->options($encryption)->default('ssl')->required(),
                     TextInput::make('sent_folder')->label(__('Map voor verzonden mail'))->default('INBOX.Sent')
                         ->helperText(__('Wordt automatisch herkend')),
+                    TextInput::make('spam_folder')->label(__('Spam-map'))->placeholder('INBOX.Junk')
+                        ->helperText(__('Wordt automatisch herkend; spam wordt ook opgehaald.')),
                 ]),
         ]);
     }

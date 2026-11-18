@@ -2,16 +2,19 @@
 
 namespace App\Support\Billing;
 
+use App\Models\BankAccount;
 use App\Models\Company;
 
 /** Bedrijfsgegevens zoals ze op de factuur komen; vastgelegd bij definitief maken. */
 class CompanySnapshot
 {
-    public static function make(?Company $company, ?array $settings = null): array
+    public static function make(?Company $company, ?array $settings = null, ?BankAccount $bank = null): array
     {
         $settings ??= BillingSettings::all();
+        // Gekozen rekening, anders de standaardrekening, anders de oude instellingen.
+        $bank ??= BankAccount::forCurrency(null);
 
-        return [
+        return array_merge([
             'name' => $company?->legal_name ?: $company?->name,
             'trade_name' => $company?->name,
             'address_line' => $company?->address_line,
@@ -27,6 +30,7 @@ class CompanySnapshot
             'account_holder' => $settings['account_holder'] ?? null,
             'iban' => $settings['iban'] ?? null,
             'bic' => $settings['bic'] ?? null,
-        ];
+            'bank_extra' => null,
+        ], $bank ? $bank->snapshot() : []);
     }
 }

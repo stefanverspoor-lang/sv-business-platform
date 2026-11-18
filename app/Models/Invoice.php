@@ -133,4 +133,9 @@ class Invoice extends Model
     {
         return $query->whereIn('status', InvoiceStatus::outstanding());
     }
+
+    public function bankAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
 }

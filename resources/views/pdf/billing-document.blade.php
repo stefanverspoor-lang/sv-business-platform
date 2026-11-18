@@ -49,7 +49,7 @@
 
 <div class="footer">
     {{ collect([$company['name'] ?? null, $company['registration_number'] ? __('KvK/reg.nr.').' '.$company['registration_number'] : null,
-        $company['vat_number'] ? __('Btw-nr.').' '.$company['vat_number'] : null,
+        $company['vat_number'] && $showVat ? __('Btw-nr.').' '.$company['vat_number'] : null,
         $company['iban'] ? 'IBAN '.$company['iban'].($company['bic'] ? ' · BIC '.$company['bic'] : '') : null])->filter()->implode(' · ') }}
     @if ($footer)<br>{{ $footer }}@endif
 </div>
@@ -80,7 +80,7 @@
             <strong>{{ $client['name'] }}</strong><br>
             @if ($client['contact']){{ __('t.a.v.') }} {{ $client['contact'] }}<br>@endif
             @foreach ($addr($client) as $line){{ $line }}<br>@endforeach
-            @if ($client['vat_number'])<span class="small">{{ __('Btw-nr.') }} {{ $client['vat_number'] }}</span>@endif
+            @if ($client['vat_number'] && $showVat)<span class="small">{{ __('Btw-nr.') }} {{ $client['vat_number'] }}</span>@endif
         </td>
         <td style="vertical-align: top">
             <h1>{{ $title }}</h1>
@@ -117,7 +117,7 @@
             <th>{{ __('Omschrijving') }}</th>
             <th class="num">{{ __('Aantal') }}</th>
             <th class="num">{{ __('Prijs') }}</th>
-            <th class="num">{{ __('Btw') }}</th>
+            @if ($showVat)<th class="num">{{ __('Btw') }}</th>@endif
             <th class="num">{{ __('Bedrag') }}</th>
         </tr>
     </thead>
@@ -129,7 +129,7 @@
                 </td>
                 <td class="num">{{ $num($line->quantity) }}{{ $line->unit ? ' '.__($line->unit) : '' }}</td>
                 <td class="num">{{ $money($line->unit_price) }}</td>
-                <td class="num">{{ $num($line->vat_rate) }}%</td>
+                @if ($showVat)<td class="num">{{ $num($line->vat_rate) }}%</td>@endif
                 <td class="num">{{ $money($line->line_total) }}</td>
             </tr>
         @endforeach
@@ -137,21 +137,34 @@
 </table>
 
 <table class="totals">
+    @if ($showVat)
     <tr><td>{{ __('Subtotaal') }}</td><td class="num">{{ $money($document->subtotal) }}</td></tr>
     @foreach ($vat as $row)
         <tr><td>{{ $row['label'] ? __($row['label']) : __('Btw') }}{{ str_contains((string) $row['label'], '%') || (float) $row['rate'] == 0.0 ? '' : ' '.$num($row['rate']).'%' }} <span class="small muted">{{ __('over') }} {{ $money($row['base']) }}</span></td>
             <td class="num">{{ $money($row['vat']) }}</td></tr>
     @endforeach
+    @endif
     <tr class="grand"><td>{{ __('Totaal') }}</td><td class="num">{{ $money($document->total) }}</td></tr>
 </table>
 <div class="currency" style="text-align: right">{{ __('Alle bedragen in :currency.', ['currency' => $document->currency]) }}</div>
 
-@foreach ($notes as $note)
+@foreach ($showVat ? $notes : [] as $note)
     <p class="small" style="margin-top: 4mm"><strong>{{ $note }}</strong></p>
 @endforeach
 
 @if ($paymentText && $company['iban'])
     <div class="box">{{ $paymentText }}</div>
+@endif
+
+@if ($showBank && ($company['iban'] ?? null))
+    <table class="meta" style="margin-top: 5mm; width: auto">
+        <tr><td colspan="2" style="font-weight: bold; padding-bottom: 1.5mm">{{ __('Betaalgegevens') }}</td></tr>
+        @if ($company['account_holder'] ?? null)<tr><td class="label">{{ __('Rekeninghouder') }}</td><td>{{ $company['account_holder'] }}</td></tr>@endif
+        @if ($company['bank_name'] ?? null)<tr><td class="label">{{ __('Bank') }}</td><td>{{ $company['bank_name'] }}</td></tr>@endif
+        <tr><td class="label">{{ __('IBAN / rekeningnummer') }}</td><td>{{ $company['iban'] }}</td></tr>
+        @if ($company['bic'] ?? null)<tr><td class="label">{{ __('BIC / SWIFT') }}</td><td>{{ $company['bic'] }}</td></tr>@endif
+        @if ($company['bank_extra'] ?? null)<tr><td class="label"></td><td>{!! nl2br(e($company['bank_extra'])) !!}</td></tr>@endif
+    </table>
 @endif
 
 @if ($document->notes)

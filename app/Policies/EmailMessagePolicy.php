@@ -31,11 +31,11 @@ class EmailMessagePolicy
 
     public function delete(User $user, EmailMessage $message): bool
     {
-        return false;
+        return $user->can('emails.delete') && $this->view($user, $message);
     }
 
     public function deleteAny(User $user): bool
     {
-        return false;
+        return $user->can('emails.delete');
     }
 }

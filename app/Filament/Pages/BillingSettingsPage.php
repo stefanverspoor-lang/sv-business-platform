@@ -90,11 +90,11 @@ class BillingSettingsPage extends Page
                     TextEntry::make('numbering_note')->hiddenLabel()->columnSpan(2)
                         ->state(__('Nummers lopen per jaar door en worden pas uitgegeven als een factuur definitief wordt, zodat er geen gaten ontstaan.')),
                 ]),
-                Tab::make(__('Bank'))->columns(2)->schema([
-                    TextInput::make('account_holder')->label(__('Rekeninghouder'))->maxLength(255),
-                    TextInput::make('bank_name')->label(__('Bank'))->maxLength(255),
-                    TextInput::make('iban')->label(__('IBAN / rekeningnummer'))->maxLength(50),
-                    TextInput::make('bic')->label(__('BIC / SWIFT'))->maxLength(20),
+                Tab::make(__('Bank'))->schema([
+                    TextEntry::make('bank_note')->hiddenLabel()
+                        ->state(__('Je kunt meerdere bankrekeningen vastleggen (bijv. per land of valuta) en per factuur kiezen welke erop komt.'))
+                        ->suffixAction(\Filament\Actions\Action::make('banks')->label(__('Bankrekeningen beheren'))->button()
+                            ->url(fn () => \App\Filament\Resources\BankAccounts\BankAccountResource::getUrl())),
                 ]),
                 Tab::make(__('Teksten'))->columns(2)->schema([
                     Textarea::make('payment_text_nl')->label(__('Betaaltekst (NL)'))->rows(3)->helperText($placeholders),
