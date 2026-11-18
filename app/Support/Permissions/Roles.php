@@ -49,6 +49,12 @@ final class Roles
         'data_jobs.view_all', // alle data-entry-opdrachten zien (anders alleen eigen)
         'data_jobs.manage',   // opdrachten aanmaken, toewijzen, opleveren
         'time.view_all',      // uren van iedereen zien en corrigeren
+        'invoices.view',      // offertes en facturen bekijken
+        'invoices.manage',    // offertes en facturen maken, versturen, crediteren
+        'payments.manage',    // betalingen registreren
+        'finance.view',       // financieel overzicht, uitgaven en inkomsten bekijken
+        'finance.manage',     // uitgaven, inkomsten en wisselkoersen registreren
+        'billing.settings',   // factuurinstellingen, btw-tarieven en categorieën
         'users.manage',       // gebruikers van het eigen bedrijf beheren
         'audit.view',
     ];
@@ -67,7 +73,8 @@ final class Roles
             self::PROJECT => ['clients.view', 'documents.upload', 'emails.send', 'credentials.view'],
             self::ADMINISTRATION => ['clients.view_all', 'clients.view', 'clients.create', 'clients.update',
                 'contracts.manage', 'documents.upload', 'emails.view_all', 'emails.send', 'templates.manage',
-                'collection.view_all', 'reports.view', 'projects.view_all', 'data_jobs.view_all', 'time.view_all'],
+                'collection.view_all', 'reports.view', 'projects.view_all', 'data_jobs.view_all', 'time.view_all',
+                'invoices.view', 'invoices.manage', 'payments.manage', 'finance.view', 'finance.manage'],
         ];
     }
 

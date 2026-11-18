@@ -37,6 +37,13 @@ class ViewProject extends ViewRecord
                 ->color('gray')
                 ->visible(fn () => filled($this->record->website_url))
                 ->url(fn () => $this->record->website_url, true),
+            Action::make('billMaintenance')
+                ->label(__('Onderhoud factureren'))
+                ->icon(Heroicon::OutlinedArrowPathRoundedSquare)
+                ->color('gray')
+                ->visible(fn () => auth()->user()->can('invoices.manage') && (float) $this->record->maintenance_fee > 0
+                    && ! \App\Models\RecurringInvoice::where('project_id', $this->record->id)->where('is_active', true)->exists())
+                ->url(fn () => \App\Filament\Resources\RecurringInvoices\RecurringInvoiceResource::getUrl('create', ['project' => $this->record->id])),
             EditAction::make(),
         ];
     }

@@ -92,5 +92,20 @@ class Tick extends Command
 
         Artisan::call('crm:backup', [], $this->output);
         Artisan::call('auth:clear-resets', [], $this->output);
+
+        // Terugkerende facturen (na de back-up)
+        $tenants = app(TenantManager::class);
+        foreach (Company::where('is_active', true)->get() as $company) {
+            $tenants->runFor($company, function () use ($company) {
+                try {
+                    $made = app(\App\Support\Billing\RecurringInvoiceRunner::class)->run($company);
+                    if ($made) {
+                        $this->line("  {$company->slug}: {$made} terugkerende factuur/facturen gemaakt");
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            });
+        }
     }
 }

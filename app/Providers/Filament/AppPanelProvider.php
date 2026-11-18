@@ -65,6 +65,8 @@ class AppPanelProvider extends PanelProvider
                 NavigationGroup::make(fn () => __('Pre-incasso')),
                 NavigationGroup::make(fn () => __('Websites')),
                 NavigationGroup::make(fn () => __('Data-entry')),
+                NavigationGroup::make(fn () => __('Facturatie')),
+                NavigationGroup::make(fn () => __('Financiën')),
                 NavigationGroup::make(fn () => __('Beheer'))->collapsed(),
             ])
             ->databaseNotifications()

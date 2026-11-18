@@ -117,10 +117,32 @@ dat gegevens van SV en YES nooit door elkaar lopen.
 - Urenregistratie voor iedereen; eigen uren zijn 14 dagen zelf aan te passen.
 - Rapportages: productiviteit data-entry en urenoverzicht, per medewerker en periode.
 
+## Facturatie en financiën
+
+- Offertes, facturen en creditnota's per bedrijf, in het Nederlands of Engels en in elke valuta
+  (EUR, IDR, USD ...), met de wisselkoers naar de basisvaluta vastgelegd per document.
+- Btw per regel met instelbare tarieven (ook 0%, vrijgesteld, verlegd en "geen btw"); de
+  tekst die op de factuur moet (bijv. "Btw verlegd") komt er automatisch op.
+- Een factuur is een concept tot "definitief maken" of "versturen". Dan pas krijgt hij een
+  nummer (doorlopend per jaar, zonder gaten), worden klant- en bedrijfsgegevens vastgelegd en
+  wordt de PDF bewaard. Daarna wijzigt hij niet meer; corrigeren gaat met een creditnota,
+  die automatisch wordt verrekend met wat er nog open stond.
+- PDF met dompdf (geen externe programma's nodig, werkt op Hostinger).
+- Versturen per e-mail vanuit het CRM met de PDF als bijlage; handmatige betalingen.
+- Terugkerende facturen (bijv. onderhoud per maand), dagelijks gemaakt door `crm:tick`:
+  als concept, definitief of meteen gemaild.
+- Nog niet gefactureerde uren, data-entry-records en pre-incassocommissie zet je met één knop
+  op een conceptfactuur; ze kunnen niet twee keer gefactureerd worden.
+- Uitgaven en inkoopfacturen (met bon), overige inkomsten, categorieën, wisselkoersen.
+- Financieel overzicht: omzet, kosten, resultaat, btw-saldo, openstaande posten, per klant en
+  per maand; exports naar Excel en CSV voor de accountant. Geen vervanging van een
+  wettelijke boekhouding.
+
 ## Status
 
 - Fase 0 (inrichting Hostinger): afgerond
 - Fase 1 (fundament): afgerond
 - Fase 2 (klantprofiel, documenten, taken, e-mail): afgerond
 - Fase 3 (telemarketing en pre-incasso): afgerond
-- Fase 4 (websiteprojecten, data-entry, urenregistratie): in deze versie
+- Fase 4 (websiteprojecten, data-entry, urenregistratie): afgerond
+- Fase 5 (facturatie en financiën): in deze versie

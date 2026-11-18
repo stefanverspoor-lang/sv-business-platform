@@ -57,6 +57,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\Project::class, \App\Policies\ProjectPolicy::class);
         Gate::policy(\App\Models\DataJob::class, \App\Policies\DataJobPolicy::class);
         Gate::policy(\App\Models\TimeEntry::class, \App\Policies\TimeEntryPolicy::class);
+        Gate::policy(\App\Models\Invoice::class, \App\Policies\InvoicePolicy::class);
+        Gate::policy(\App\Models\Quote::class, \App\Policies\QuotePolicy::class);
+        Gate::policy(\App\Models\RecurringInvoice::class, \App\Policies\RecurringInvoicePolicy::class);
+        Gate::policy(\App\Models\Expense::class, \App\Policies\ExpensePolicy::class);
+        Gate::policy(\App\Models\Income::class, \App\Policies\IncomePolicy::class);
+        Gate::policy(\App\Models\VatRate::class, \App\Policies\VatRatePolicy::class);
+        Gate::policy(\App\Models\FinanceCategory::class, \App\Policies\FinanceCategoryPolicy::class);
+        Gate::policy(\App\Models\ExchangeRate::class, \App\Policies\ExchangeRatePolicy::class);
 
         // Vaste korte namen in de database voor gekoppelde onderdelen,
         // zodat ze niet afhangen van klassenamen in de code.
@@ -78,6 +86,11 @@ class AppServiceProvider extends ServiceProvider
             'project' => \App\Models\Project::class,
             'project_request' => \App\Models\ProjectRequest::class,
             'data_job' => \App\Models\DataJob::class,
+            'invoice' => \App\Models\Invoice::class,
+            'quote' => \App\Models\Quote::class,
+            'recurring_invoice' => \App\Models\RecurringInvoice::class,
+            'expense' => \App\Models\Expense::class,
+            'income' => \App\Models\Income::class,
         ]);
 
         Event::listen(Login::class, function (Login $event) {

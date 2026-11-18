@@ -190,6 +190,7 @@ class ClientResource extends Resource
             EmailsRelationManager::class,
             ContractsRelationManager::class,
             ServicesRelationManager::class,
+            \App\Filament\Resources\Clients\RelationManagers\InvoicesRelationManager::class,
             DocumentsRelationManager::class,
         ];
     }
